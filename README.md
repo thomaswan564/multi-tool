@@ -37,24 +37,11 @@ GUI 框架：tkinter / ttk
 
 數據緩存：json
 
-📦 安裝與準備工作
-1. 克隆倉庫
-Bash
-git clone https://github.com/thomaswan564/multi-tool.git
-cd multi-tool
-2. 安裝依賴環境
 請確保您的電腦已安裝 Python 3.8+。使用 pip 安裝必要的 Python 模組：
 
-Bash
-pip install playwright
 註：本工具會直接優先調用您電腦中已安裝的 Chrome 或 Edge 瀏覽器，因此無需強制執行 playwright install chromium。
 
 🚀 使用說明
-執行程序
-在命令行中運行主腳本：
-
-Bash
-python multi-tool.py
 操作流程
 A. 課表下載功能
 在界面上方選擇院校與【課程表自動獲取下載工具】。
