@@ -79,8 +79,8 @@ B. 全自動選課 / 搶課功能
 點擊 【開始 Start】 開始自動化輪詢搶課。
 
 📁 項目結構
-Plaintext
-.
+Plaintext \n
+. \n
 ├── multi-tool.py       # 主程序源碼 (GUI 與自動化邏輯)
 ├── cached_courses.json    # 運行後自動生成的本地課程緩存檔案
 └── README.md              # 項目說明文件
