@@ -427,9 +427,15 @@ If you plan to publicly distribute the project and allow modification or redistr
 
 ---
 
-## 👤 Author | 作者
+# 👨‍💻 Author
 
 **Thomas Wan**
+
+Personal Website:
+
+https://thomaswan.uk
+
+---
 
 Personal interest project, mainly developed for learning:
 
