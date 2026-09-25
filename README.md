@@ -293,20 +293,18 @@ SCHOOL_FEATURES = {
 
 本项目暂未指定具体开源许可证。
 
-如果计划公开发布并允许其他人修改、分发，建议根据自己的需求选择合适的开源许可证，例如 MIT License。
-
 ---
 
-## 👤 作者
+# 👨‍💻 Author
 
 **Thomas Wan**
 
-个人兴趣项目，主要用于学习：
+Personal Website:
 
-- Python GUI 开发
-- Playwright 浏览器自动化
-- Web 自动化
-- 教务系统自动化
-- 桌面工具开发
+https://thomaswan.uk
+
+---
+
+⭐ 如果这个项目对你有帮助，欢迎 Star。
 
 欢迎提交 Issue 或 Pull Request，共同改进项目。
