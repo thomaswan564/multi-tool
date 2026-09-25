@@ -1,52 +1,106 @@
-# 教务辅助工具
+# 教務輔助工具 | Academic Affairs Assistant
 
-> 🚀 **懒人直达：** [点击这里直接跳转到使用方法](https://github.com/thomaswan564/multi-tool#-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95)
+A desktop **Academic Affairs Assistant** built with **Python + Tkinter + Playwright**, providing automatic timetable retrieval, PDF export, and automated course selection.
 
-一个基于 **Python + Tkinter + Playwright** 开发的桌面端教务辅助工具，提供课程表自动获取、PDF 下载以及自主选课自动化等功能。
-
-> **项目版本：v1.1**
+> **Current Version: v1.2**
 >
-> 本项目主要用于学习 Python GUI、Playwright 浏览器自动化、网页交互及教务系统自动化相关技术。
+> This project is mainly developed as a personal learning project for Python GUI development, Playwright browser automation, web interaction, and academic affairs system automation.
 
-## ✨ 功能
+本項目是一個基於 **Python + Tkinter + Playwright** 開發的桌面端**教務輔助工具**，提供課程表自動獲取、PDF 下載以及自主選課自動化等功能。
 
-### 🏫 支持的学校
+> **當前版本：v1.2**
+>
+> 本項目主要用於學習 Python GUI、Playwright 瀏覽器自動化、網頁交互及教務系統自動化相關技術。
 
-目前代码内置以下学校：
+---
 
-- 私立华联大学
-- 广州大学
+## 🚀 Quick Start | 快速開始
 
-不同学校使用独立的网页操作逻辑，后续可以继续扩展其他学校。
+> **Lazy? Go straight to the usage guide:**
+>
+> [👉 Click here to jump directly to 使用方法](https://github.com/thomaswan564/multi-tool#-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95)
 
-### 📅 课程表自动获取
+> **懶人直達：**
+>
+> [👉 點擊這裡直接跳轉至「使用方法」](https://github.com/thomaswan564/multi-tool#-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95)
 
-支持自动登录教务系统并进入课表查询页面：
+---
 
-- 自动填写学号和密码
-- 自动进入课表查询页面
-- 检测课表是否已经开放
-- 自动执行查询操作
-- 自动导出课表 PDF
-- 用户可以选择 PDF 保存目录
+## ✨ Features | 功能
 
-### 🎯 全自动选课
+### 🏫 Supported Universities | 支持的學校
 
-支持自主选课页面的自动化操作：
+Currently supported:
 
-- 自动登录教务系统
-- 自动进入自主选课页面
-- 自动检测当前是否处于选课阶段
-- 自动获取可选课程列表
-- GUI 勾选需要报名的课程
-- 支持设置轮询间隔
-- 按照选择顺序进行选课
-- 支持自动跳过暂未开放的课程
-- 支持停止正在运行的自动选课任务
+- **Canton Private Hualian University**
+- **Guangzhou University (GZHU)**
 
-### 🌐 浏览器自动检测
+目前支持：
 
-程序会自动检测系统中已经安装的浏览器，目前包含：
+- **廣州私立華聯大學**
+- **廣州大學（GZHU）**
+
+Each university uses its own web automation logic, allowing additional universities to be added in the future.
+
+不同學校使用獨立的網頁操作邏輯，後續可以繼續擴展其他學校。
+
+### 📅 Automatic Timetable Retrieval | 課程表自動獲取
+
+The program can automatically log in to the academic affairs system and access the timetable query page:
+
+- Automatically enter student ID and password
+- Automatically navigate to the timetable page
+- Detect whether the timetable is available
+- Automatically perform the query
+- Export the timetable as a PDF
+- Allow the user to choose the PDF save location
+
+程序可以自動登入教務系統並進入課表查詢頁面：
+
+- 自動填寫學號和密碼
+- 自動進入課表查詢頁面
+- 檢測課表是否已開放
+- 自動執行查詢操作
+- 自動導出課表 PDF
+- 用戶可以選擇 PDF 保存位置
+
+### 🎯 Automated Course Selection | 全自動選課
+
+The automated course selection feature supports:
+
+- Automatic login to the academic affairs system
+- Automatic navigation to the course selection page
+- Detection of the current course selection status
+- Automatic retrieval of available courses
+- GUI-based course selection
+- Configurable polling interval
+- Course selection in the order selected by the user
+- Automatic skipping of courses that are not yet open
+- Ability to stop an active course selection task
+
+全自動選課功能支持：
+
+- 自動登入教務系統
+- 自動進入自主選課頁面
+- 自動檢測當前是否處於選課階段
+- 自動獲取可選課程列表
+- 通過 GUI 勾選需要報名的課程
+- 支持設置輪詢間隔
+- 按照用戶選擇的順序進行選課
+- 支持自動跳過暫未開放的課程
+- 支持停止正在運行的自動選課任務
+
+### 🌐 Browser Detection | 瀏覽器自動檢測
+
+The program automatically detects supported browsers installed on the system, including:
+
+- Google Chrome
+- Microsoft Edge
+- Brave Browser
+- Mozilla Firefox
+- Safari (macOS)
+
+程序會自動檢測系統中已安裝的瀏覽器，目前包括：
 
 - Google Chrome
 - Microsoft Edge
@@ -54,90 +108,107 @@
 - Mozilla Firefox
 - Safari（macOS）
 
-用户可以选择“自动检测”，也可以手动选择检测到的浏览器。
+You can select **Automatic Detection** or manually choose a detected browser.
 
-### 💾 课程列表缓存
+用戶可以選擇「自動檢測」，也可以手動選擇已檢測到的瀏覽器。
 
-程序会将已经获取到的可选课程列表保存为 JSON 文件，下次启动程序时可以直接加载之前的课程列表，减少重复获取。
+### 💾 Course List Cache | 課程列表緩存
 
-当前代码默认缓存文件名：
+The program saves retrieved course lists as a JSON cache file so that previously retrieved courses can be loaded when the program starts again.
+
+程序會將已獲取的可選課程列表保存為 JSON 緩存文件，下次啟動程序時可以直接加載之前的課程列表，減少重複獲取。
+
+The cache file is:
 
 ```text
 cached_courses.json
 ```
 
-缓存位置取决于当前代码版本的 `CACHE_FILE` 配置。
-
-如果需要将缓存统一保存到 Windows 的 `%APPDATA%`，可以将缓存目录修改为类似：
+在 Windows 下，配置數據保存在當前 Windows 用戶的 `%APPDATA%` 目錄中：
 
 ```text
-%APPDATA%\教务辅助工具\cached_courses.json
+%APPDATA%\教務輔助工具\cached_courses.json
 ```
 
-程序界面也提供 **“清除缓存”** 功能，可以删除已经保存的课程列表。
+The application also provides a **Clear Cache** function.
+
+程序界面同時提供 **「清除緩存」** 功能，可以刪除已保存的課程列表。
 
 ---
 
-## 🖥️ 运行环境
+## 🖥️ Requirements | 運行環境
 
-建议使用：
+Recommended environment:
 
-- Windows 10 / Windows 11
+- Microsoft Windows 10 / Windows 11
 - Python 3.10+
-- Chromium 系浏览器（推荐 Chrome 或 Edge）
+- Chromium-based browser or Mozilla Firefox
 - Playwright
 
-理论上也支持 macOS，但具体教务系统页面和浏览器环境需要根据实际情况测试。
+建議運行環境：
+
+- Microsoft Windows 10 / Windows 11
+- Python 3.10+
+- Chromium 系瀏覽器或 Mozilla Firefox
+- Playwright
+
+The program may also work on macOS, but the supported university systems and browser environments should be tested separately.
+
+理論上也可以在 macOS 上運行，但具體教務系統頁面及瀏覽器環境需要根據實際情況測試。
 
 ---
 
-## 📦 安装
+## 📦 Installation | 安裝
 
-### 1. 安装 Python
+### 1. Install Python | 安裝 Python
 
-前往 Python 官网下载安装 Python：
+Download and install Python from the official website:
 
-https://www.python.org/
+[Python](https://www.python.org/)
 
-安装时建议勾选：
+Download and install Python from the official website:
+
+[Python 官方網站](https://www.python.org/)
+
+During installation, it is recommended to enable:
 
 ```text
 Add Python to PATH
 ```
 
-检查 Python：
+Check the installation:
 
 ```powershell
 py --version
 ```
 
-或者：
+or:
 
 ```powershell
 python --version
 ```
 
-### 2. 安装 Playwright
+### 2. Install Playwright | 安裝 Playwright
 
-在 PowerShell / CMD 中执行：
+Run the following in PowerShell or CMD:
 
 ```powershell
 py -m pip install playwright
 ```
 
-然后安装 Playwright 浏览器组件：
+Then install the Playwright browser components:
 
 ```powershell
 py -m playwright install
 ```
 
-如果只使用 Chromium，可以安装：
+If you only need Chromium:
 
 ```powershell
 py -m playwright install chromium
 ```
 
-### 3. 检查 Playwright
+### 3. Check Playwright | 檢查 Playwright
 
 ```powershell
 py -m playwright --version
@@ -145,66 +216,105 @@ py -m playwright --version
 
 ---
 
-## ▶️ 运行程序
+## ▶️ Run | 運行程序
 
-下载或克隆项目后，在项目目录执行：
+Clone or download the repository, then open PowerShell / CMD in the project directory.
+
+克隆或下載本項目後，在項目目錄打開 PowerShell / CMD。
+
+Run:
 
 ```powershell
 py code-multi-tool-v1.1.py
 ```
 
-如果你的 Python 命令是 `python`，也可以：
+If your Python command is `python`, you can also use:
 
 ```powershell
 python code-multi-tool-v1.1.py
 ```
 
-程序启动后会出现 Tkinter 图形界面。
+The program will open a Tkinter graphical interface.
+
+程序啟動後會出現 Tkinter 圖形界面。
 
 ---
 
-## 🧭 使用方法
+## 🧭 使用方法 | Usage
 
-### 课程表下载
+### 📅 Timetable Download | 課程表下載
 
-1. 启动程序
-2. 选择学校
-3. 选择 `课程表自动获取下载工具`
-4. 选择浏览器
-5. 输入学号
-6. 输入密码
-7. 选择 PDF 保存路径
-8. 点击开始
-9. 等待程序完成课表查询和 PDF 下载
+1. Start the program.
+2. Select a university.
+3. Select `課程表自動獲取下載工具`.
+4. Select a browser.
+5. Enter your student ID.
+6. Enter your password.
+7. Select a PDF save location.
+8. Click **Start**.
+9. Wait for the timetable query and PDF download to finish.
 
-### 自动选课
+1. 啟動程序。
+2. 選擇學校。
+3. 選擇 `課程表自動獲取下載工具`。
+4. 選擇瀏覽器。
+5. 輸入學號。
+6. 輸入密碼。
+7. 選擇 PDF 保存路徑。
+8. 點擊 **開始**。
+9. 等待程序完成課表查詢及 PDF 下載。
 
-1. 启动程序
-2. 选择学校
-3. 选择 `全自动选课工具`
-4. 选择浏览器
-5. 输入学号和密码
-6. 获取可选课程列表
-7. 勾选需要报名的课程
-8. 设置轮询间隔
-9. 根据需要开启“自动跳过未开放选课的课程”
-10. 点击开始
-11. 程序会按照选择顺序自动执行选课操作
+### 🎯 Automated Course Selection | 全自動選課
 
-运行过程中可以通过 **停止** 按钮终止自动选课任务。
+1. Start the program.
+2. Select a university.
+3. Select `全自動選課工具`.
+4. Select a browser.
+5. Enter your student ID and password.
+6. Retrieve the available course list.
+7. Select the courses you want to register for.
+8. Set the polling interval.
+9. Enable **Automatically Skip Unopened Courses** if needed.
+10. Click **Start**.
+11. The program will automatically attempt course selection in the order you selected.
+
+1. 啟動程序。
+2. 選擇學校。
+3. 選擇 `全自動選課工具`。
+4. 選擇瀏覽器。
+5. 輸入學號及密碼。
+6. 獲取可選課程列表。
+7. 勾選需要報名的課程。
+8. 設置輪詢間隔。
+9. 根據需要開啟「自動跳過未開放選課的課程」。
+10. 點擊 **開始**。
+11. 程序會按照選擇順序自動執行選課操作。
+
+You can click **Stop** during execution to terminate the automated course selection task.
+
+運行過程中可以通過 **停止** 按鈕終止自動選課任務。
 
 ---
 
-## 🔐 账号安全
+## 🔐 Account Security | 賬號安全
 
-程序需要使用教务系统账号登录，因此请注意：
+The program requires your academic affairs system credentials. Please keep them secure:
 
-- 不要把自己的学号、密码提交到 GitHub
-- 不要在代码中硬编码个人账号密码
-- 不要将包含个人账号信息的截图上传到公开仓库
-- 不要提交 `cached_courses.json` 等可能包含个人数据的文件
+- Do not upload your student ID or password to GitHub.
+- Do not hard-code personal credentials in the source code.
+- Do not upload screenshots containing personal account information to a public repository.
+- Do not commit local cache files that may contain personal information.
 
-建议在 `.gitignore` 中加入：
+程序需要使用教務系統賬號登錄，請注意：
+
+- 不要將自己的學號、密碼提交到 GitHub。
+- 不要在代碼中硬編碼個人賬號密碼。
+- 不要將包含個人賬號信息的截圖上傳到公開倉庫。
+- 不要提交可能包含個人數據的本地緩存文件。
+
+Recommended `.gitignore` entries:
+
+建議在 `.gitignore` 中加入：
 
 ```gitignore
 __pycache__/
@@ -217,16 +327,18 @@ cached_courses.json
 
 ---
 
-## 🧩 项目结构
+## 🧩 Project Structure | 項目結構
 
 ```text
 .
-├── code-multi-tool-v1.1.py    # 主程序
-├── README.md                   # 项目说明
-└── cached_courses.json         # 本地课程缓存（运行后生成）
+├── code-multi-tool-v1.1.py    # Main program / 主程序
+├── README.md                   # Documentation / 項目說明
+└── cached_courses.json         # Local cache / 本地課程緩存（運行後生成）
 ```
 
-如果后续将项目拆分为多个模块，可以进一步整理为：
+If the project is later split into multiple modules, it can be organized as:
+
+如果後續將項目拆分為多個模塊，可以進一步整理為：
 
 ```text
 .
@@ -241,70 +353,135 @@ cached_courses.json
 
 ---
 
-## 🛠️ 技术栈
+## 🛠️ Technology Stack | 技術棧
 
-| 技术 | 用途 |
-|---|---|
-| Python | 程序主体 |
-| Tkinter | GUI 图形界面 |
-| Playwright | 浏览器自动化 |
-| asyncio | 异步网页操作 |
-| threading | GUI 与自动化任务并行 |
-| JSON | 本地课程列表缓存 |
+| Technology | Usage | 技術 | 用途 |
+|---|---|---|---|
+| Python | Main application | Python | 程序主體 |
+| Tkinter | GUI | Tkinter | 圖形界面 |
+| Playwright | Browser automation | Playwright | 瀏覽器自動化 |
+| asyncio | Asynchronous web operations | asyncio | 異步網頁操作 |
+| threading | GUI and automation task concurrency | threading | GUI 與自動化任務並行 |
+| JSON | Local course cache | JSON | 本地課程列表緩存 |
 
 ---
 
-## 🔧 开发说明
+## 🔧 Development | 開發說明
 
-程序采用 Tkinter 作为 GUI 主线程，同时使用 `asyncio` + `threading` 执行 Playwright 自动化任务，以避免浏览器自动化过程中阻塞 GUI。
+The program uses Tkinter as the main GUI thread and runs Playwright automation through `asyncio` + `threading` to avoid blocking the GUI during browser automation.
 
-学校相关功能通过配置映射统一管理，例如：
+程序採用 Tkinter 作為 GUI 主線程，同時使用 `asyncio` + `threading` 執行 Playwright 自動化任務，以避免瀏覽器自動化過程中阻塞 GUI。
+
+University-specific features are managed through a unified configuration mapping:
+
+學校相關功能通過統一的配置映射進行管理：
 
 ```python
 SCHOOL_FEATURES = {
-    "私立华联大学": {
-        "课程表自动获取下载工具": {...},
-        "全自动选课工具": {...}
+    "私立華聯大學": {
+        "課程表自動獲取下載工具": {...},
+        "全自動選課工具": {...}
     },
-    "广州大学": {
-        "课程表自动获取下载工具": {...},
-        "全自动选课工具": {...}
+    "廣州大學": {
+        "課程表自動獲取下載工具": {...},
+        "全自動選課工具": {...}
     }
 }
 ```
 
-因此新增学校时，可以按照现有学校的结构增加对应的登录、课表查询、课程抓取和自动选课函数。
+Additional universities can be added by implementing the corresponding login, timetable query, course retrieval, and automated course selection functions.
+
+因此，新增學校時，可以按照現有學校的結構增加對應的登錄、課表查詢、課程抓取及自動選課函數。
 
 ---
 
-## ⚠️ 注意事项
+## ⚠️ Notes | 注意事項
 
-1. 本项目依赖具体学校教务系统的网页结构。
-2. 如果学校升级教务系统、修改页面元素或接口，原有自动化逻辑可能失效。
-3. “全自动选课”功能需要学校当前处于开放选课阶段。
-4. 课表下载功能需要学校已经开放对应学年学期的课表查询。
-5. 不同学校的登录流程可能不同，例如部分系统可能存在二次身份认证。
-6. 请合理设置轮询间隔，避免对学校教务系统造成过高请求压力。
-7. 使用本程序产生的选课结果、账号问题及学校系统限制等，应以学校官方系统实际结果为准。
+1. This project depends on the specific web structure of each university's academic affairs system.
+2. If a university changes its system, page elements, or APIs, existing automation logic may stop working.
+3. The automated course selection feature requires the university to be in an active course selection period.
+4. Timetable retrieval requires the relevant timetable to be available in the university system.
+5. Different universities may use different login procedures, including additional authentication.
+6. Please use a reasonable polling interval to avoid placing excessive request load on university systems.
+7. Course selection results, account issues, and system restrictions are subject to the actual results and rules of the university's official system.
+
+1. 本項目依賴各學校教務系統的具體網頁結構。
+2. 如果學校升級教務系統、修改頁面元素或接口，原有自動化邏輯可能失效。
+3. 「全自動選課」功能需要學校當前處於開放選課階段。
+4. 課表下載功能需要學校已經開放對應學年學期的課表查詢。
+5. 不同學校的登錄流程可能不同，例如部分系統可能存在二次身份認證。
+6. 請合理設置輪詢間隔，避免對學校教務系統造成過高請求壓力。
+7. 使用本程序產生的選課結果、賬號問題及學校系統限制等，應以學校官方系統實際結果為準。
 
 ---
 
-## 📄 License
+## 📄 License | 開源許可
 
-本项目暂未指定具体开源许可证。
+This project currently does not specify a particular open-source license.
+
+本項目目前尚未指定具體的開源許可證。
+
+If you plan to publicly distribute the project and allow modification or redistribution, choose an appropriate license according to your needs, such as the MIT License.
+
+如果計劃公開發布並允許其他人修改、分發，可以根據自己的需求選擇合適的開源許可證，例如 MIT License。
 
 ---
 
-# 👨‍💻 Author
+## 👤 Author | 作者
 
 **Thomas Wan**
 
-Personal Website:
+Personal interest project, mainly developed for learning:
 
-https://thomaswan.uk
+個人興趣項目，主要用於學習：
+
+- Python GUI development / Python GUI 開發
+- Playwright browser automation / Playwright 瀏覽器自動化
+- Web automation / Web 自動化
+- Academic affairs system automation / 教務系統自動化
+- Desktop application development / 桌面工具開發
+
+Issues and Pull Requests are welcome.
+
+⭐ 如果這個項目對你有幫助，歡迎 Star。
+
+歡迎提交 Issue 或 Pull Request，共同改進項目。
 
 ---
 
-⭐ 如果这个项目对你有帮助，欢迎 Star。
+## 📋 Release Notes | 版本更新
 
-欢迎提交 Issue 或 Pull Request，共同改进项目。
+### v1.2
+
+**What's New:**
+- Store *Configuration Data* in the Windows user's *AppData directory* instead of the program directory.
+- Fixed known issues and improved stability.
+
+**版本 v1.2：**
+- 將 *用戶配置文件（Configuration Data）* 存儲至 *Windows 用戶的 AppData 目錄*，而非程序目錄。
+- 修復已知問題並提升程序穩定性。
+
+### v1.1
+
+**What's New:**
+- Added support for *Guangzhou University (GZHU)*.
+- Fixed known issues and improved stability.
+
+**版本 v1.1：**
+- 新增支持 *廣州大學（GZHU）*。
+- 修復已知問題並提升程序穩定性。
+
+### v1.0
+
+**Initial Release:**
+- Supports *Canton Private Hualian University*.
+- Supports *Microsoft Windows*.
+- Supports *Chromium-based browsers and Firefox*.
+
+**版本 v1.0：**
+- 僅支持 *廣州私立華聯大學*。
+- 僅支持 *Microsoft Windows*。
+- 僅支持 *Chromium 系瀏覽器及 Firefox 瀏覽器*。
+
+***Thank you for using!***  
+***感謝您的使用！***
