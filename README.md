@@ -18,7 +18,7 @@ A desktop **Academic Affairs Assistant** built with **Python + Tkinter + Playwri
 
 > **Lazy? Go straight to the usage guide:**
 >
-> [👉 Click here to jump directly to 使用方法](https://github.com/thomaswan564/multi-tool#-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95--usage)
+> [👉 Click here to jump directly to usage guide](https://github.com/thomaswan564/multi-tool#-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95--usage)
 
 > **懶人直達：**
 >
