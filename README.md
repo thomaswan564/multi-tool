@@ -1,5 +1,7 @@
 # 教务辅助工具
 
+> 🚀 **懒人直达：** [点击这里直接跳转到使用方法](https://github.com/thomaswan564/multi-tool#-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95)
+
 一个基于 **Python + Tkinter + Playwright** 开发的桌面端教务辅助工具，提供课程表自动获取、PDF 下载以及自主选课自动化等功能。
 
 > **项目版本：v1.1**
