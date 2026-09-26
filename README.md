@@ -32,7 +32,7 @@ A desktop **Academic Affairs Assistant** built with **Python + Tkinter + Playwri
 
 Currently supported:
 
-- **Canton Private Hualian University（HLU)**
+- **Canton Private Hualian University (HLU)**
 - **Guangzhou University (GZHU)**
 
 目前支持：
