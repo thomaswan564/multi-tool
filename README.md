@@ -32,8 +32,8 @@ A desktop **Academic Affairs Assistant** built with **Python + Tkinter + Playwri
 
 Currently supported:
 
-- **Canton Private Hualian University (HLU)**
-- **Guangzhou University (GZHU)**
+- **Guangzhou (Canton) Private Hualian University (HLU)**
+- **Guangzhou (Canton) University (GZHU)**
 
 目前支持：
 
@@ -108,9 +108,9 @@ The program automatically detects supported browsers installed on the system, in
 - Mozilla Firefox
 - Safari（macOS）
 
-You can select **Automatic Detection** or manually choose a detected browser.
+You can select **Automatic Detection (自动检测)** or manually choose a detected browser.
 
-用戶可以選擇「自動檢測」，也可以手動選擇已檢測到的瀏覽器。
+用戶可以選擇「自动检测」，也可以手動選擇已檢測到的瀏覽器。
 
 ### 💾 Course List Cache | 課程列表緩存
 
@@ -132,7 +132,7 @@ cached_courses.json
 
 The application also provides a **Clear Cache** function.
 
-程序界面同時提供 **「清除緩存」** 功能，可以刪除已保存的課程列表。
+程序界面同時提供 **「清除缓存」** 功能，可以刪除已保存的課程列表。
 
 ---
 
@@ -246,53 +246,53 @@ The program will open a Tkinter graphical interface.
 
 1. Start the program.
 2. Select a university.
-3. Select `課程表自動獲取下載工具`.
+3. Select `课程表自动获取下载工具`.
 4. Select a browser.
 5. Enter your student ID.
 6. Enter your password.
 7. Select a PDF save location.
-8. Click **Start**.
+8. Click **开始 Start**.
 9. Wait for the timetable query and PDF download to finish.
 
 1. 啟動程序。
 2. 選擇學校。
-3. 選擇 `課程表自動獲取下載工具`。
+3. 選擇 `课程表自动获取下载工具`。
 4. 選擇瀏覽器。
 5. 輸入學號。
 6. 輸入密碼。
 7. 選擇 PDF 保存路徑。
-8. 點擊 **開始**。
+8. 點擊 **开始 Start**。
 9. 等待程序完成課表查詢及 PDF 下載。
 
 ### 🎯 Automated Course Selection | 全自動選課
 
 1. Start the program.
 2. Select a university.
-3. Select `全自動選課工具`.
+3. Select `全自动选课工具`.
 4. Select a browser.
 5. Enter your student ID and password.
 6. Retrieve the available course list.
 7. Select the courses you want to register for.
 8. Set the polling interval.
 9. Enable **Automatically Skip Unopened Courses** if needed.
-10. Click **Start**.
+10. Click **开始 Start**.
 11. The program will automatically attempt course selection in the order you selected.
 
 1. 啟動程序。
 2. 選擇學校。
-3. 選擇 `全自動選課工具`。
+3. 選擇 `全自动选课工具`。
 4. 選擇瀏覽器。
 5. 輸入學號及密碼。
 6. 獲取可選課程列表。
 7. 勾選需要報名的課程。
 8. 設置輪詢間隔。
 9. 根據需要開啟「自動跳過未開放選課的課程」。
-10. 點擊 **開始**。
+10. 點擊 **开始 Start**。
 11. 程序會按照選擇順序自動執行選課操作。
 
-You can click **Stop** during execution to terminate the automated course selection task.
+You can click **停止 Stop** during execution to terminate the automated course selection task.
 
-運行過程中可以通過 **停止** 按鈕終止自動選課任務。
+運行過程中可以通過 **停止 Stop** 按鈕終止自動選課任務。
 
 ---
 
@@ -378,13 +378,13 @@ University-specific features are managed through a unified configuration mapping
 
 ```python
 SCHOOL_FEATURES = {
-    "私立華聯大學": {
-        "課程表自動獲取下載工具": {...},
-        "全自動選課工具": {...}
+    "私立华联大学": {
+        "课程表自动获取下载工具": {...},
+        "全自动选课工具": {...}
     },
-    "廣州大學": {
-        "課程表自動獲取下載工具": {...},
-        "全自動選課工具": {...}
+    "广州大学": {
+        "课程表自动获取下载工具": {...},
+        "全自动选课工具": {...}
     }
 }
 ```
@@ -407,23 +407,11 @@ Additional universities can be added by implementing the corresponding login, ti
 
 1. 本項目依賴各學校教務系統的具體網頁結構。
 2. 如果學校升級教務系統、修改頁面元素或接口，原有自動化邏輯可能失效。
-3. 「全自動選課」功能需要學校當前處於開放選課階段。
+3. 「全自动选课工具」功能需要學校當前處於開放選課階段。
 4. 課表下載功能需要學校已經開放對應學年學期的課表查詢。
 5. 不同學校的登錄流程可能不同，例如部分系統可能存在二次身份認證。
 6. 請合理設置輪詢間隔，避免對學校教務系統造成過高請求壓力。
 7. 使用本程序產生的選課結果、賬號問題及學校系統限制等，應以學校官方系統實際結果為準。
-
----
-
-## 📄 License | 開源許可
-
-This project currently does not specify a particular open-source license.
-
-本項目目前尚未指定具體的開源許可證。
-
-If you plan to publicly distribute the project and allow modification or redistribution, choose an appropriate license according to your needs, such as the MIT License.
-
-如果計劃公開發布並允許其他人修改、分發，可以根據自己的需求選擇合適的開源許可證，例如 MIT License。
 
 ---
 
@@ -451,7 +439,7 @@ Issues and Pull Requests are welcome.
 
 ⭐ 如果這個項目對你有幫助，歡迎 Star。
 
-歡迎提交 Issue 或 Pull Request，共同改進項目。
+歡迎提交 Issues 或 Pull Request，共同改進項目。
 
 ---
 
@@ -470,22 +458,22 @@ Issues and Pull Requests are welcome.
 ### v1.1
 
 **What's New:**
-- Added support for *Guangzhou University (GZHU)*.
+- Added support for *Guangzhou (Canton) University (GZHU)*.
 - Fixed known issues and improved stability.
 
 **版本 v1.1：**
-- 新增支持 *廣州大學（GZHU）*。
+- 新增支持 *广州大学（GZHU）*。
 - 修復已知問題並提升程序穩定性。
 
 ### v1.0
 
 **Initial Release:**
-- Supports *Canton Private Hualian University*.
+- Supports *Guangzhou (Canton) Private Hualian University*.
 - Supports *Microsoft Windows*.
 - Supports *Chromium-based browsers and Firefox*.
 
 **版本 v1.0：**
-- 僅支持 *廣州私立華聯大學*。
+- 僅支持 *广州私立华联大学（HLU）*。
 - 僅支持 *Microsoft Windows*。
 - 僅支持 *Chromium 系瀏覽器及 Firefox 瀏覽器*。
 
