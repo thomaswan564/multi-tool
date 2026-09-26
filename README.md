@@ -32,12 +32,12 @@ A desktop **Academic Affairs Assistant** built with **Python + Tkinter + Playwri
 
 Currently supported:
 
-- **Canton Private Hualian University**
+- **Canton Private Hualian University （HLU)**
 - **Guangzhou University (GZHU)**
 
 目前支持：
 
-- **廣州私立華聯大學**
+- **廣州私立華聯大學 (HLU)**
 - **廣州大學（GZHU）**
 
 Each university uses its own web automation logic, allowing additional universities to be added in the future.
