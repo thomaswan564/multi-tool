@@ -33,6 +33,15 @@ export default {
       return json({ ok: true }, 200, cors);
     }
 
+    // The Worker serves the API and calendar feeds; send visitors at the
+    // domain root to the public Multi-Tool web app hosted on GitHub Pages.
+    if ((method === "GET" || method === "HEAD") && url.pathname === "/") {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: "https://thomaswan564.github.io/multi-tool/" }
+      });
+    }
+
     if (method === "OPTIONS") {
       return new Response(null, { status: 204, headers: cors });
     }
