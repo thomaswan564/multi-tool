@@ -33,20 +33,17 @@ export default {
       return json({ ok: true }, 200, cors);
     }
 
-    // The Worker serves the API and calendar feeds; send visitors at the
-    // domain root to the public Multi-Tool web app hosted on GitHub Pages.
-    if ((method === "GET" || method === "HEAD") && url.pathname === "/") {
-      return new Response(null, {
-        status: 302,
-        headers: { Location: "https://thomaswan564.github.io/multi-tool/" }
-      });
-    }
-
     if (method === "OPTIONS") {
       return new Response(null, { status: 204, headers: cors });
     }
 
-    if (!env.GITHUB_OWNER || !env.GITHUB_REPO || !env.GITHUB_TOKEN) {
+    const isBackendPath = url.pathname === "/.well-known/caldav"
+      || url.pathname === "/caldav"
+      || url.pathname.startsWith("/caldav/")
+      || url.pathname.startsWith("/api/")
+      || ((method === "GET" || method === "HEAD") && url.pathname.toLowerCase().endsWith(".ics"));
+
+    if (isBackendPath && (!env.GITHUB_OWNER || !env.GITHUB_REPO || !env.GITHUB_TOKEN)) {
       return json({ success: false, error: "Worker 配置不完整（GITHUB_*）" }, 500, cors);
     }
 
@@ -70,6 +67,10 @@ export default {
         return await serveCalendar(request, env, url, cors);
       }
 
+      if (method === "GET" || method === "HEAD") {
+        return await proxyGitHubPages(request, url);
+      }
+
       return json({ success: false, error: "Not Found" }, 404, cors);
     } catch (error) {
       return json(
@@ -80,6 +81,26 @@ export default {
     }
   }
 };
+
+async function proxyGitHubPages(request, url) {
+  const pagesUrl = new URL(
+    url.pathname === "/" ? "/multi-tool/" : `/multi-tool${url.pathname}`,
+    "https://thomaswan564.github.io"
+  );
+  pagesUrl.search = url.search;
+
+  const headers = new Headers(request.headers);
+  headers.delete("authorization");
+  headers.delete("cookie");
+  headers.delete("host");
+  headers.delete("origin");
+
+  return fetch(new Request(pagesUrl, {
+    method: request.method,
+    headers,
+    redirect: "manual"
+  }));
+}
 
 /* ========================================================================== */
 /* API                                                                        */
