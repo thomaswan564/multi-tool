@@ -9,5 +9,16 @@
     "role": "user",
     "disabled": false,
     "createdAt": "2026-10-22T12:50:54.913Z"
+  },
+  {
+    "usernameHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "usernameEncrypted": "XmmLB9CulXl5am7FBhU8L2KTDclACpSjXKkpyoNiFMY",
+    "passwordHash": "1b4f0e9851971998e732078544c96b36c3d01cedf7caa332359d6f1d83567014",
+    "apiKeyHash": "561a73a4de974f50339d761c1d43a5fc22c31df98a500b14a84fc8d1893a92d4",
+    "apiKeyEncrypted": "prmXrNRdul_iMaf2iLu5qOfNLcKnNK7jPAAX1eKyP0HmLr7amLSbnD9LIXgqHgj-j1rWLvV6Pru40K7q_IMzXU4tORKoxdhC4KPZ2g",
+    "school": "hlu",
+    "role": "user",
+    "disabled": false,
+    "createdAt": "2026-10-22T13:01:50.411Z"
   }
 ]
