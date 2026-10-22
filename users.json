@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "usernameHash": "8bb73b8921878a68570a92215fbf1b2439d263f2b5d86ddd828aed7cf5925c48",
+    "usernameEncrypted": "UMDO7Id_y4MByg1Q2BYIwjdzwlmrmRz5OoIPaPYza8F-F_-JZE9N8A",
+    "passwordHash": "cd59df46f6508d025aeb1c5c0274b46e0ccaa1615b1e4bcd71d61969835d324f",
+    "apiKeyHash": "5e3d7f1968f4a22219382cde07e3a72f5fb48a8a1ebae71b05b8223b3795a805",
+    "apiKeyEncrypted": "Hvz7JJyB9sUHn4BElhgyW13dwAsFH7pwx62InfRvpXf_jd_IF7GgoeY5vAMNCMEx5bs3pqgAq9OTFfH2avoOdk8DSPX4FB-fcW9I0w",
+    "school": "hlu",
+    "role": "user",
+    "disabled": false,
+    "createdAt": "2026-10-22T12:50:54.913Z"
+  }
+]
