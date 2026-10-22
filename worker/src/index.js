@@ -915,7 +915,7 @@ async function handleCalDav(request, env, url, cors) {
     if (!resource) {
       return new Response("Not Found", { status: 404, headers: cors });
     }
-    const plain = await decryptIcs(resource.text, apiKey).catch(() => "");
+    const plain = resource.plainText || (await decryptIcs(resource.text, apiKey).catch(() => ""));
     if (!isIcs(plain)) {
       return new Response("Calendar is encrypted or invalid.", { status: 500, headers: cors });
     }
@@ -955,15 +955,26 @@ async function handleCalDav(request, env, url, cors) {
       }
     }
 
-    const encrypted = await encryptIcs(bodyText, apiKey);
-    const path = caldavResourcePath(config, school, apiKey, filename);
-    await writeFile(env, path, encrypted, `Update calendar via CalDAV ${school}/${apiKey}/${filename}`);
+    const plainBody = removeIcsMethod(bodyText);
+    let path = caldavResourcePath(config, school, apiKey, filename);
+    if (existing && existing.virtual && existing.uid) {
+      const current = await readFile(env, existing.path);
+      const source = current ? await decryptIcs(current.text, apiKey).catch(() => "") : "";
+      const updated = replaceCalendarObject(source, existing.uid, plainBody);
+      if (!updated) return new Response("Invalid calendar object UID.", { status: 400, headers: cors });
+      path = existing.path;
+      await writeFile(env, path, await encryptIcs(updated, apiKey), `Update calendar via CalDAV ${school}/${apiKey}/${filename}`);
+    } else {
+      const encrypted = await encryptIcs(plainBody, apiKey);
+      await writeFile(env, path, encrypted, `Update calendar via CalDAV ${school}/${apiKey}/${filename}`);
+    }
+    const nextEtag = `"${await sha256Hex(plainBody)}"`;
 
     return new Response(null, {
       status: existing ? 204 : 201,
       headers: {
         ...cors,
-        ETag: `"${await sha256Hex(encrypted)}"`,
+        ETag: nextEtag,
         Location: `${collectionHref}${encodeURIComponent(filename)}`
       }
     });
@@ -977,7 +988,16 @@ async function handleCalDav(request, env, url, cors) {
     if (!resource) {
       return new Response("Not Found", { status: 404, headers: cors });
     }
-    await deleteFile(env, resource.path);
+    if (resource.virtual && resource.uid) {
+      const current = await readFile(env, resource.path);
+      const source = current ? await decryptIcs(current.text, apiKey).catch(() => "") : "";
+      const updated = replaceCalendarObject(source, resource.uid, null);
+      if (updated) {
+        await writeFile(env, resource.path, await encryptIcs(updated, apiKey), `Delete calendar event via CalDAV ${school}/${apiKey}/${resource.filename}`);
+      }
+    } else {
+      await deleteFile(env, resource.path);
+    }
     return new Response(null, { status: 204, headers: cors });
   }
 
@@ -1002,7 +1022,7 @@ async function loadCalDavResources(env, config, school, apiKey) {
   const mainPath = registeredPath(config, school, apiKey);
   const main = await readFile(env, mainPath);
   if (main) {
-    resources.push(await makeCalDavResource(mainName, mainPath, main, school, apiKey));
+    resources.push(...(await makeCalDavResources(mainName, mainPath, main, school, apiKey, true)));
   }
 
   const directory = caldavDirectoryPath(config, school, apiKey);
@@ -1015,21 +1035,124 @@ async function loadCalDavResources(env, config, school, apiKey) {
     const path = `${directory}/${filename}`;
     const file = await readFile(env, path);
     if (!file) continue;
-    resources.push(await makeCalDavResource(filename, path, file, school, apiKey));
+    resources.push(...(await makeCalDavResources(filename, path, file, school, apiKey, false)));
   }
 
   return resources;
 }
 
 async function makeCalDavResource(filename, path, file, school, apiKey) {
+  const plainText = removeIcsMethod(await decryptIcs(file.text, apiKey).catch(() => file.text));
+  const uid = extractCalendarUid(plainText);
   return {
     filename,
     path,
     text: file.text,
-    size: file.size,
-    etag: `"${await sha256Hex(file.text)}"`,
-    href: `/caldav/${encodeURIComponent(school)}/${encodeURIComponent(apiKey)}/${encodeURIComponent(filename)}`
+    plainText,
+    size: new TextEncoder().encode(plainText).length,
+    etag: `"${await sha256Hex(plainText)}"`,
+    href: `/caldav/${encodeURIComponent(school)}/${encodeURIComponent(apiKey)}/${encodeURIComponent(filename)}`,
+    uid,
+    virtual: false
   };
+}
+
+async function makeCalDavResources(filename, path, file, school, apiKey, mainStorage) {
+  const plainText = removeIcsMethod(await decryptIcs(file.text, apiKey).catch(() => file.text));
+  const objects = splitCalendarObjects(plainText);
+  if (objects.length === 0) return [];
+  if (objects.length === 1) {
+    return [await makeCalDavResource(filename, path, file, school, apiKey)];
+  }
+
+  const resources = [];
+  for (const object of objects) {
+    const eventFilename = `event-${(await sha256Hex(object.uid)).slice(0, 24)}.ics`;
+    resources.push({
+      filename: eventFilename,
+      path,
+      text: object.text,
+      plainText: object.text,
+      size: new TextEncoder().encode(object.text).length,
+      etag: `"${await sha256Hex(object.text)}"`,
+      href: `/caldav/${encodeURIComponent(school)}/${encodeURIComponent(apiKey)}/${encodeURIComponent(eventFilename)}`,
+      uid: object.uid,
+      virtual: true,
+      mainStorage
+    });
+  }
+  return resources;
+}
+
+function removeIcsMethod(text) {
+  return String(text || "").replace(/^METHOD:[^\r\n]*(?:\r?\n)?/gim, "");
+}
+
+function extractCalendarUid(text) {
+  const unfolded = String(text || "").replace(/\r?\n[ \t]/g, "");
+  const match = unfolded.match(/^UID:(.*)$/im);
+  return match ? match[1].trim() : "";
+}
+
+function splitCalendarObjects(text) {
+  const clean = removeIcsMethod(String(text || "")).replace(/\r?\n/g, "\r\n");
+  const blocks = [...clean.matchAll(/BEGIN:VEVENT\r?\n[\s\S]*?\r?\nEND:VEVENT/gi)];
+  if (!blocks.length) return [];
+
+  let prefix = clean.slice(0, blocks[0].index);
+  if (/TZID=Asia\/Shanghai/i.test(clean) && !/BEGIN:VTIMEZONE[\s\S]*?TZID:Asia\/Shanghai/i.test(clean)) {
+    prefix += [
+      "BEGIN:VTIMEZONE",
+      "TZID:Asia/Shanghai",
+      "X-LIC-LOCATION:Asia/Shanghai",
+      "BEGIN:STANDARD",
+      "DTSTART:19910101T000000",
+      "TZOFFSETFROM:+0800",
+      "TZOFFSETTO:+0800",
+      "TZNAME:CST",
+      "END:STANDARD",
+      "END:VTIMEZONE",
+      ""
+    ].join("\r\n");
+  }
+  const suffix = clean.slice(blocks[blocks.length - 1].index + blocks[blocks.length - 1][0].length);
+  const groups = new Map();
+  for (const match of blocks) {
+    const uid = extractCalendarUid(match[0]);
+    if (!uid) continue;
+    if (!groups.has(uid)) groups.set(uid, []);
+    groups.get(uid).push(match[0]);
+  }
+
+  return [...groups.entries()].map(([uid, events]) => ({
+    uid,
+    text: `${prefix}${events.join("\r\n")}${suffix}`
+  }));
+}
+
+function replaceCalendarObject(sourceText, uid, replacementText) {
+  const source = removeIcsMethod(String(sourceText || "")).replace(/\r?\n/g, "\r\n");
+  const blocks = [...source.matchAll(/BEGIN:VEVENT\r?\n[\s\S]*?\r?\nEND:VEVENT/gi)];
+  if (!blocks.length || !uid) return "";
+  const prefix = source.slice(0, blocks[0].index);
+  const suffix = source.slice(blocks[blocks.length - 1].index + blocks[blocks.length - 1][0].length);
+  const events = [];
+  let replaced = false;
+  for (const match of blocks) {
+    const eventUid = extractCalendarUid(match[0]);
+    if (eventUid === uid) {
+      if (!replaced && replacementText) {
+        const replacement = splitCalendarObjects(replacementText).find((object) => object.uid === uid);
+        if (!replacement) return "";
+        events.push(...[...replacement.text.matchAll(/BEGIN:VEVENT\r?\n[\s\S]*?\r?\nEND:VEVENT/gi)].map((item) => item[0]));
+      }
+      replaced = true;
+    } else {
+      events.push(match[0]);
+    }
+  }
+  if (!replaced) return "";
+  return `${prefix}${events.join("\r\n")}${suffix}`;
 }
 
 function caldavDirectoryPath(config, school, apiKey) {
@@ -1197,7 +1320,7 @@ async function caldavReport(request, resources, apiKey, cors) {
       if (!wanted) continue;
     }
 
-    const plain = await decryptIcs(resource.text, apiKey).catch(() => "");
+    const plain = resource.plainText || (await decryptIcs(resource.text, apiKey).catch(() => ""));
     if (!isIcs(plain)) continue;
 
     responses.push(`
