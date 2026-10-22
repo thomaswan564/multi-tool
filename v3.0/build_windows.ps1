@@ -4,7 +4,7 @@ Set-Location $PSScriptRoot
 $app = Join-Path $PSScriptRoot "code-multi-tool-v3.0.py"
 $vendor = Join-Path $PSScriptRoot "_vendor"
 $qrcode = Join-Path $vendor "qrcode"
-$name = "Multi-Tool-v3.0.1"
+$name = "Multi-Tool-v3.0.2"
 
 py -m PyInstaller `
   --noconfirm `

@@ -46,7 +46,7 @@ from cloud_client import (  # noqa: E402
     webcal_url,
 )
 
-APP_VERSION = "3.0.1"
+APP_VERSION = "3.0.2"
 
 # 根据系统UI默认字体
 SYS_FONT = "PingFang SC" if sys.platform == "darwin" else "Microsoft YaHei"
@@ -2209,7 +2209,7 @@ class UnifiedCampusApp:
 
         tk.Label(
             self.cloud_frame,
-            text="二维码内容为 webcal:// 订阅地址；CalDAV 用户名与密码均填 API key。访客无需 API，文件以“学校+学号”明文保存。",
+            text="Apple 日曆請使用唯讀 webcal 訂閱或第三方 CalDAV App；CalDAV 登入名和密碼均填 API key。",
             font=(SYS_FONT, 8),
             fg="gray",
             wraplength=520,
@@ -2823,13 +2823,12 @@ class UnifiedCampusApp:
             "帳戶類型：手動 / Advanced / CalDAV\n"
             "用戶名：你的 API key\n"
             "密碼：同一個 API key\n\n"
-            "Apple 日曆（macOS）：日曆 → 添加帳戶 → 其他 CalDAV 帳戶 → 手動；"
-            "填入以上伺服器地址、用戶名和密碼。\n\n"
-            "iPhone / iPad：設定 → 日曆 → 帳戶 → 添加帳戶 → 其他 → 添加 CalDAV 帳戶，"
-            "選手動並填入以上資料。\n\n"
-            "Thunderbird：新建日曆 → 網絡上 → CalDAV，填入伺服器地址，"
-            "再按提示填用戶名和 API key。Android 可使用 DAVx⁵，添加 CalDAV URL 後填入相同憑據。\n\n"
-            "CalDAV 可同步日曆更改；webcal/ICS 訂閱是唯讀。API key 等同密碼，請勿分享。"
+            "重要：Apple 原生「日曆」不支援此服務的 CalDAV 連線，請勿在 macOS 或 iPhone/iPad 的系統帳戶中添加此 CalDAV 地址。\n\n"
+            "Apple 用戶可選以下方式：\n"
+            "1. 使用第三方支援 CalDAV 的日曆 App，按該 App 指引選 CalDAV，填入上方地址，並以 API key 同時作為用戶名和密碼。\n"
+            "2. 使用本程序的「訂閱網址」或 webcal 二維碼，在 Apple 日曆中加入 webcal 訂閱；此方式唯讀，更新頻率由日曆服務決定。\n\n"
+            "非 Apple 用戶可在 Thunderbird（新建日曆 → 網絡上 → CalDAV）或 Android 的 DAVx⁵ 中添加上方地址；用戶名和密碼均填 API key。CalDAV 支援同步更改。\n\n"
+            "API key 等同密碼，請勿分享。"
         )
         messagebox.showinfo("CalDAV 配置", instructions, parent=self.root)
 
@@ -2877,7 +2876,7 @@ class UnifiedCampusApp:
 
         hint = "用手机相机/日历扫描二维码即可订阅。"
         if caldav:
-            hint += f"\nCalDAV：{caldav}\n用户名/密码均填 API key。"
+            hint += f"\nCalDAV（非 Apple 原生日曆）：{caldav}\n用户名/密码均填 API key。Apple 用户请使用第三方 CalDAV App 或 webcal 只读订阅。"
         tk.Label(window, text=hint, font=(SYS_FONT, 9), fg="#444444", justify="left").pack(
             anchor="w", padx=14, pady=(8, 0)
         )
@@ -3407,7 +3406,7 @@ class UnifiedCampusApp:
             if subscription_url:
                 message += f"\n\n云端订阅地址：\n{subscription_url}"
             if caldav_result:
-                message += f"\n\nCalDAV：\n{caldav_result}\n用户名/密码均填 API key。"
+                message += f"\n\nCalDAV（非 Apple 原生日曆）：\n{caldav_result}\n用户名/密码均填 API key。Apple 用户请使用第三方 CalDAV App 或 webcal 只读订阅。"
             if cloud_config and not subscription_url:
                 message += "\n\n云端上传未成功，请查看运行日志。"
             self.root.after(

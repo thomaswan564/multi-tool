@@ -1,4 +1,4 @@
-# 教務輔助工具 v3.0.1
+# 教務輔助工具 v3.0.2
 
 v3.0 把主要功能放回桌面程序：生成 ICS、加密上傳、雲端文件列表/刪除、webcal 二維碼、CalDAV 顯示。網頁只保留註冊、登錄、查看 API。
 
@@ -9,7 +9,8 @@ v3.0 把主要功能放回桌面程序：生成 ICS、加密上傳、雲端文�
 - **註冊模式**：勾選後填 API key，程序用 AES-256-GCM 加密，Worker 存 `ics/{school}/{api}.ics`。
 - **雲端文件列表**：程序內「雲端文件列表...」可刷新、上傳本地 ICS、刪除、複製地址、顯示二維碼。
 - **webcal 二維碼**：主界面「二維碼」或文件列表「顯示二維碼」生成 `webcal://` 訂閱碼。
-- **CalDAV**：註冊用戶可複製 `/caldav/{school}/{api}/`，並在「配置 CalDAV…」查看 Apple 日曆、iOS、Thunderbird、DAVx⁵ 的連線方式。CalDAV 支援同步更改；webcal/ICS 訂閱是唯讀。
+- **CalDAV**：註冊用戶可複製 `/caldav/{school}/{api}/`。CalDAV 可供非 Apple 原生日曆客戶端（如 Thunderbird、Android DAVx⁵）使用；Apple 用戶可改用第三方 CalDAV App，或以 webcal/ICS 唯讀訂閱。
+- **Apple 用戶提示**：程序會在 CalDAV 配置、訂閱二維碼及生成完成提示中說明原生 Apple 日曆不支援此服務的 CalDAV 連線，並提供替代方式。
 
 ## 安裝
 
@@ -23,9 +24,14 @@ python -m playwright install
 
 ## Windows EXE
 
-到 [GitHub Releases](https://github.com/thomaswan564/multi-tool/releases/latest) 下載 `Multi-Tool-v3.0.1.exe`，無需另外安裝 Python。程序會使用電腦已安裝的 Chrome、Edge、Firefox 或 Brave 執行教務系統自動化；電腦需至少安裝其中一種瀏覽器。首次啟動若 Windows SmartScreen 顯示提示，請先確認檔案來自本倉庫的 Releases。
+到 [GitHub Releases](https://github.com/thomaswan564/multi-tool/releases/latest) 下載 `Multi-Tool-v3.0.2.exe`，無需另外安裝 Python。程序會使用電腦已安裝的 Chrome、Edge、Firefox 或 Brave 執行教務系統自動化；電腦需至少安裝其中一種瀏覽器。首次啟動若 Windows SmartScreen 顯示提示，請先確認檔案來自本倉庫的 Releases。
 
-維護者可在 Windows 開發環境安裝 `requirements.txt` 與 PyInstaller，再執行 `./build_windows.ps1` 重建。打包後檔案位於 `dist/Multi-Tool-v3.0.1.exe`。
+維護者可在 Windows 開發環境安裝 `requirements.txt` 與 PyInstaller，再執行 `./build_windows.ps1` 重建。打包後檔案位於 `dist/Multi-Tool-v3.0.2.exe`。
+
+## v3.0.2
+
+- 說明 Apple 原生日曆無法使用本服務的 CalDAV；Apple 用戶可選第三方 CalDAV App，或使用唯讀 webcal 訂閱。
+- 在桌面程序的配置指引、二維碼說明和生成完成提示中加入兼容性提醒。
 
 ## 配置
 
@@ -54,11 +60,11 @@ python -m playwright install
 GET https://api.github.com/repos/{github_owner}/{github_repo}/releases/latest
 ```
 
-- 比較 `tag_name` 與程式內 `APP_VERSION`（例如 `v3.0.1` > `3.0.0`）。
+- 比較 `tag_name` 與程式內 `APP_VERSION`（例如 `v3.0.2` > `3.0.1`）。
 - 若遠端較新，彈窗提示「前往下載」，打開 Release 頁面或 `.exe` 資產連結。
 - 未配置倉庫、沒有 Release、離線或 API 限流時只寫入日誌，不阻塞使用。
 - GitHub Release tag 建議使用 `v3.0.0`、`v3.0.1` 這種格式；公開倉庫即可，無需 Token。
-- 每次發佈新 exe 前，請同步修改程式頂部的 `APP_VERSION`（例如 `3.0.1`），否則新版本仍會被判定為舊版/同版。
+- 每次發佈新 exe 前，請同步修改程式頂部的 `APP_VERSION`（例如 `3.0.2`），否則新版本仍會被判定為舊版/同版。
 
 ## 使用流程
 
@@ -71,14 +77,15 @@ GET https://api.github.com/repos/{github_owner}/{github_repo}/releases/latest
 5. 生成後：
    - 點「二維碼」顯示 `webcal://` 訂閱碼。
    - 點「雲端文件列表...」查看/刪除/上傳。
-   - 註冊用戶點「配置 CalDAV…」，在日曆客戶端選手動 CalDAV，填入地址；用戶名與密碼均為 API key。
+   - 註冊用戶點「配置 CalDAV…」查看說明。非 Apple 原生日曆客戶端可用 CalDAV；Apple 用戶請使用第三方 CalDAV App，或選 webcal 唯讀訂閱。
 
 ### 手動配置 ICS / CalDAV
 
 在桌面程序完成註冊並驗證 API key 後：
 
 - **ICS 訂閱（唯讀）**：複製「訂閱網址」，或掃描「二維碼」；若客戶端要求訂閱地址，可將 `https://.../{school}/{apiKey}.ics` 的協議改為 `webcal://`。訪客模式使用 `.../guest/{school}/{studentId}.ics`，不需帳密，但連結持有人可讀取日曆。
-- **CalDAV（可同步修改）**：複製 CalDAV 伺服器地址，在 Apple 日曆、iOS「設定 → 日曆 → 帳戶 → 添加帳戶 → 其他 → 添加 CalDAV 帳戶」、Thunderbird「新建日曆 → 網絡上 → CalDAV」，或 Android DAVx⁵ 中選手動配置。服務器地址貼入程序顯示的 `/caldav/{school}/{apiKey}/`；帳戶類型選 CalDAV，**用戶名和密碼均填 API key**。若客戶端使用單獨的「服務器」和「路徑」欄位，整個 URL 可放服務器欄，或將主機填服務器、`/caldav/{school}/{apiKey}/` 填路徑。
+- **CalDAV（可同步修改）**：此服務的 CalDAV 不適用於 Apple 原生日曆及 iOS 系統 CalDAV 帳戶。非 Apple 用戶可在 Thunderbird「新建日曆 → 網絡上 → CalDAV」或 Android DAVx⁵ 中手動配置；Apple 用戶可使用支援 CalDAV 的第三方 App。服務器地址填程序顯示的 `/caldav/{school}/{apiKey}/`，**用戶名和密碼均填 API key**。
+- **Apple 日曆 webcal 訂閱（唯讀）**：使用程序的「訂閱網址」或掃描 webcal 二維碼添加訂閱。訂閱只能讀取課程，無法由日曆端修改課程。
 - API key 等同密碼，請勿分享；註冊用戶日曆加密密鑰由 API key 派生，遺失後無法解密既有資料。
 
 ## 文件說明

@@ -4,13 +4,13 @@
 
 A desktop **Academic Affairs Assistant** built with **Python + Tkinter + Playwright**, providing automatic timetable retrieval, PDF export, and automated course selection.
 
-> **Current Version: v3.0.1**
+> **Current Version: v3.0.2**
 >
 > This project is mainly developed as a personal learning project for Python GUI development, Playwright browser automation, web interaction, and academic affairs system automation.
 
 本項目是一個基於 **Python + Tkinter + Playwright** 開發的桌面端**教務輔助工具**，提供課程表自動獲取、PDF 下載以及自主選課自動化等功能。
 
-> **當前版本：v3.0.1**
+> **當前版本：v3.0.2**
 >
 > 本項目主要用於學習 Python GUI、Playwright 瀏覽器自動化、網頁交互及教務系統自動化相關技術。
 
