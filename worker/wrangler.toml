@@ -4,6 +4,10 @@ compatibility_date = "2026-01-01"
 workers_dev = true
 observability = { enabled = false }
 
+[[routes]]
+pattern = "calendar.thomaswan.uk"
+custom_domain = true
+
 # 非敏感配置。敏感值用 wrangler secret put 設置：
 #   GITHUB_TOKEN, ENCRYPTION_KEY, SESSION_SECRET, TURNSTILE_SECRET
 [vars]
