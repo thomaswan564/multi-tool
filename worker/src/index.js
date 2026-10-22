@@ -81,6 +81,10 @@ async function handleApi(request, env, url, cors) {
   const method = request.method.toUpperCase();
   const config = getConfig(env, url);
 
+  if (path === "/api/admin" || path.startsWith("/api/admin/")) {
+    return handleAdminApi(request, env, url, config, cors);
+  }
+
   if (path === "/api/captcha" && method === "GET") {
     if (env.TURNSTILE_SECRET) {
       return json(
@@ -177,6 +181,120 @@ async function handleApi(request, env, url, cors) {
 }
 
 /* ========================================================================== */
+/* Admin API: ADMIN_API_KEY is a separate, user-managed Worker secret.         */
+/* ========================================================================== */
+
+async function handleAdminApi(request, env, url, config, cors) {
+  const method = request.method.toUpperCase();
+  const secret = String(env.ADMIN_API_KEY || "");
+  if (secret.length < 32) {
+    return json({ success: false, error: "管理員尚未配置，請先設定 ADMIN_API_KEY（至少 32 字元）" }, 503, cors);
+  }
+  const supplied = (request.headers.get("Authorization") || "").match(/^Bearer\s+(.+)$/i)?.[1]?.trim() || "";
+  const [expectedHash, suppliedHash] = await Promise.all([sha256Bytes(secret), sha256Bytes(supplied)]);
+  let diff = supplied.length === secret.length ? 0 : 1;
+  for (let i = 0; i < expectedHash.length; i++) diff |= expectedHash[i] ^ suppliedHash[i];
+  if (diff !== 0) return json({ success: false, error: "管理員 API key 無效" }, 401, cors);
+  if (method === "GET" && url.pathname === "/api/admin/me") {
+    return json({ success: true, username: "admin", role: "admin", permissions: ["users.read", "users.update", "users.delete", "files.read", "files.delete"] }, 200, cors);
+  }
+  if (method === "GET" && url.pathname === "/api/admin/users") {
+    const users = await loadUsers(env);
+    const result = await Promise.all(users.map(async (user) => ({
+      username: await decryptSecret(user.usernameEncrypted || "", config.encryptionKey).catch(() => "(無法解密)"),
+      school: user.school || "", disabled: Boolean(user.disabled), createdAt: user.createdAt || ""
+    })));
+    return json({ success: true, users: result }, 200, cors);
+  }
+  if (method === "GET" && url.pathname === "/api/admin/files") {
+    const files = await listAdminFiles(env, config);
+    return json({ success: true, files: files.map(({ path, ownerId, ...file }) => file) }, 200, cors);
+  }
+  const userMatch = url.pathname.match(/^\/api\/admin\/users\/([^/]+)(?:\/(password))?$/);
+  if (userMatch) {
+    const username = decodeURIComponent(userMatch[1]);
+    const users = await loadUsers(env);
+    const target = await findAdminUser(users, username, config);
+    if (!target) return json({ success: false, error: "找不到用戶" }, 404, cors);
+    if (userMatch[2] === "password" && method === "POST") {
+      const body = await safeJson(request);
+      const password = String(body.newPassword || "");
+      if (password.length < 8) return json({ success: false, error: "新密碼至少 8 位" }, 400, cors);
+      target.passwordHash = await sha256Hex(password);
+      await saveUsers(env, users);
+      return json({ success: true }, 200, cors);
+    }
+    if (method === "PATCH") {
+      const body = await safeJson(request);
+      if (typeof body.disabled !== "boolean") return json({ success: false, error: "disabled 必須是布林值" }, 400, cors);
+      target.disabled = body.disabled;
+      await saveUsers(env, users);
+      return json({ success: true, disabled: target.disabled }, 200, cors);
+    }
+    if (method === "DELETE") {
+      const files = await listAdminFiles(env, config);
+      for (const file of files.filter((item) => item.ownerId === target.apiKeyHash)) await deleteFile(env, file.path);
+      await saveUsers(env, users.filter((item) => item !== target));
+      return json({ success: true, deletedFiles: files.filter((item) => item.ownerId === target.apiKeyHash).length }, 200, cors);
+    }
+  }
+  const fileMatch = url.pathname.match(/^\/api\/admin\/files\/([a-f0-9]{64})$/i);
+  if (fileMatch && method === "DELETE") {
+    const files = await listAdminFiles(env, config);
+    const target = files.find((file) => file.id === fileMatch[1].toLowerCase());
+    if (!target) return json({ success: false, error: "找不到文件" }, 404, cors);
+    await deleteFile(env, target.path);
+    return json({ success: true }, 200, cors);
+  }
+  return json({ success: false, error: "Not Found" }, 404, cors);
+}
+
+async function sha256Bytes(value) {
+  return new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(value))));
+}
+
+async function findAdminUser(users, username, config) {
+  const clean = sanitizeUsername(username);
+  if (!clean) return null;
+  for (const user of users) {
+    const name = await decryptSecret(user.usernameEncrypted || "", config.encryptionKey).catch(() => "");
+    if (name.toLowerCase() === clean.toLowerCase()) return user;
+  }
+  return null;
+}
+
+async function listAdminFiles(env, config) {
+  const users = await loadUsers(env);
+  const usersByKey = new Map(users.map((user) => [user.apiKeyHash, user]));
+  const usernameByKey = new Map();
+  for (const user of users) usernameByKey.set(user.apiKeyHash, await decryptSecret(user.usernameEncrypted || "", config.encryptionKey).catch(() => "(無法解密)"));
+  const output = [];
+  const add = async (entry, school, kind, apiKey = "", owner = null) => {
+    if (entry.type !== "file" || !entry.name.toLowerCase().endsWith(".ics")) return;
+    const id = await sha256Hex(entry.path);
+    output.push({ id, path: entry.path, ownerId: owner?.apiKeyHash || "", filename: entry.name, school, kind,
+      owner: owner ? (usernameByKey.get(owner.apiKeyHash) || "user") : "訪客", size: entry.size || 0 });
+  };
+  for (const school of config.schools) {
+    const schoolPath = `${config.basePath}/${school}`;
+    for (const entry of await readDir(env, schoolPath)) {
+      if (entry.type === "file") {
+        const key = entry.name.replace(/\.ics$/i, "");
+        const owner = usersByKey.get(await sha256Hex(key));
+        await add(entry, school, "registered", key, owner || null);
+      } else if (entry.type === "dir") {
+        const owner = usersByKey.get(await sha256Hex(entry.name));
+        for (const resource of await readDir(env, entry.path)) await add(resource, school, "caldav", entry.name, owner || null);
+      }
+    }
+  }
+  for (const school of config.schools) {
+    for (const entry of await readDir(env, `${config.basePath}/guest/${school}`)) await add(entry, school, "guest");
+  }
+  return output;
+}
+
+/* ========================================================================== */
 /* Register / login                                                           */
 /* ========================================================================== */
 
@@ -192,6 +310,9 @@ async function registerUser(request, env, config, cors) {
       400,
       cors
     );
+  }
+  if (username.toLowerCase() === "admin") {
+    return json({ success: false, error: "admin 是保留的管理員帳戶名稱" }, 400, cors);
   }
   if (password.length < 4) {
     return json({ success: false, error: "密码至少 4 位" }, 400, cors);
@@ -231,7 +352,9 @@ async function registerUser(request, env, config, cors) {
     apiKeyHash: await sha256Hex(apiKey),
     apiKeyEncrypted: await encryptSecret(apiKey, config.encryptionKey),
     school,
-    role: "user"
+    role: "user",
+    disabled: false,
+    createdAt: new Date().toISOString()
   };
 
   users.push(user);
@@ -253,7 +376,7 @@ async function loginUser(request, env, config, cors) {
   const usernameHash = await sha256Hex(username);
   const passwordHash = await sha256Hex(password);
   const user = users.find(
-    (item) => item.usernameHash === usernameHash && item.passwordHash === passwordHash
+    (item) => item.usernameHash === usernameHash && item.passwordHash === passwordHash && !item.disabled
   );
 
   if (!user) {
@@ -544,6 +667,12 @@ async function serveCalendar(request, env, url, cors) {
     if (!school || !apiKey) {
       return new Response("Invalid calendar URL.", { status: 400, headers: cors });
     }
+    const feedUsers = await loadUsers(env);
+    const feedKeyHash = await sha256Hex(apiKey);
+    const feedOwner = feedUsers.find((item) => item.school === school && item.apiKeyHash === feedKeyHash);
+    if (!feedOwner || feedOwner.disabled) {
+      return new Response("Calendar not found.", { status: 404, headers: cors });
+    }
     filename = `${apiKey}.ics`;
     resources = await loadCalDavResources(env, config, school, apiKey);
   } else {
@@ -655,7 +784,7 @@ async function handleCalDav(request, env, url, cors) {
 
   const users = await loadUsers(env);
   const apiHash = await sha256Hex(apiKey);
-  const owner = users.find((item) => item.school === school && item.apiKeyHash === apiHash);
+  const owner = users.find((item) => item.school === school && item.apiKeyHash === apiHash && !item.disabled);
   if (!owner) {
     return caldavUnauthorized(cors);
   }
@@ -1142,7 +1271,9 @@ async function saveUsers(env, users) {
       apiKeyHash: user.apiKeyHash,
       apiKeyEncrypted: user.apiKeyEncrypted,
       school: user.school || "",
-      role: "user"
+      role: "user",
+      disabled: Boolean(user.disabled),
+      createdAt: user.createdAt || ""
     }));
 
   await writeFile(env, USERS_PATH, JSON.stringify(clean, null, 2), "Update users.json");
@@ -1158,7 +1289,7 @@ async function authenticate(request, env) {
 
   const users = await loadUsers(env);
   const hash = await sha256Hex(apiKey);
-  const user = users.find((item) => item.apiKeyHash === hash);
+  const user = users.find((item) => item.apiKeyHash === hash && !item.disabled);
   if (!user) return null;
 
   return { users, user, apiKey };
@@ -1515,7 +1646,7 @@ function buildCors(request, env) {
   const headers = {
     Vary: "Origin",
     "Access-Control-Allow-Methods":
-      "GET,POST,DELETE,OPTIONS,PROPFIND,REPORT,PUT,MKCOL,MKCALENDAR,PROPPATCH",
+      "GET,POST,PATCH,DELETE,OPTIONS,PROPFIND,REPORT,PUT,MKCOL,MKCALENDAR,PROPPATCH",
     "Access-Control-Allow-Headers":
       "Authorization,Content-Type,Depth,If-Match,If-None-Match,DAV,CF-Turnstile-Response",
     "Access-Control-Expose-Headers": "ETag,DAV,Allow,Location",

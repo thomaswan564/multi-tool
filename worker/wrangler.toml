@@ -9,7 +9,7 @@ pattern = "calendar.thomaswan.uk"
 custom_domain = true
 
 # 非敏感配置。敏感值用 wrangler secret put 設置：
-#   GITHUB_TOKEN, ENCRYPTION_KEY, SESSION_SECRET, TURNSTILE_SECRET
+#   GITHUB_TOKEN, ENCRYPTION_KEY, SESSION_SECRET, TURNSTILE_SECRET, ADMIN_API_KEY
 [vars]
 GITHUB_OWNER = "thomaswan564"
 GITHUB_REPO = "multi-tool"

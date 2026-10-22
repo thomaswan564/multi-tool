@@ -190,3 +190,15 @@ hr {
 }
 
 .captcha input { margin: 0; }
+
+.admin-card { max-width: 1180px; }
+.admin-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 18px 0; }
+.admin-card h2 { margin-top: 30px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.admin-card table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin-card th, .admin-card td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.admin-card th { background: #f6f7f9; }
+.admin-card td button { width: auto; margin: 2px; padding: 7px 10px; }
+.admin-card button.danger { background: var(--red); color: white; }
+.admin-card [hidden] { display: none !important; }
+@media (max-width: 700px) { .admin-toolbar { align-items: flex-start; flex-direction: column; } }

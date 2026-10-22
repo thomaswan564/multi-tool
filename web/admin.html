@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>管理控制台 · 課程表日曆</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card wide admin-card">
+    <h1>管理控制台</h1>
+    <p class="subtitle">管理用戶帳戶與雲端 ICS / CalDAV 文件。管理金鑰只保存在此頁記憶體中。</p>
+    <div id="message" class="error" role="alert"></div>
+    <section id="loginPanel" class="kv">
+      <label for="adminKey">管理員 API key</label>
+      <input id="adminKey" type="password" autocomplete="off" spellcheck="false" placeholder="輸入 Cloudflare ADMIN_API_KEY">
+      <button id="connectButton" type="button">連接管理 API</button>
+    </section>
+    <section id="dashboard" hidden>
+      <div class="admin-toolbar"><strong id="identity"></strong><button id="logoutButton" class="secondary" type="button">清除金鑰並退出</button></div>
+      <h2>用戶</h2>
+      <div class="table-wrap"><table><thead><tr><th>用戶名</th><th>學校</th><th>建立時間</th><th>狀態</th><th>操作</th></tr></thead><tbody id="usersBody"></tbody></table></div>
+      <h2>ICS / CalDAV 文件</h2>
+      <div class="table-wrap"><table><thead><tr><th>文件</th><th>類型</th><th>所有者</th><th>學校</th><th>大小</th><th>操作</th></tr></thead><tbody id="filesBody"></tbody></table></div>
+    </section>
+  </main>
+  <script src="config.js"></script>
+  <script>
+    (() => {
+      const base = String((window.CALENDAR_CONFIG || {}).apiBase || window.location.origin).replace(/\/+$/, "");
+      const message = document.getElementById("message");
+      const keyInput = document.getElementById("adminKey");
+      const loginPanel = document.getElementById("loginPanel");
+      const dashboard = document.getElementById("dashboard");
+      let adminKey = "";
+      const showError = (text) => { message.textContent = text || ""; message.style.display = text ? "block" : "none"; };
+      async function api(path, options = {}) {
+        const response = await fetch(base + path, { method: options.method || "GET", headers: {
+          Authorization: "Bearer " + adminKey,
+          ...(options.body ? { "Content-Type": "application/json" } : {})
+        }, body: options.body ? JSON.stringify(options.body) : undefined });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.success === false) throw new Error(data.error || `HTTP ${response.status}`);
+        return data;
+      }
+      function cell(row, value) { const td = document.createElement("td"); td.textContent = value == null ? "" : String(value); row.append(td); return td; }
+      function button(label, action, style = "secondary") { const el = document.createElement("button"); el.type = "button"; el.className = style; el.textContent = label; el.addEventListener("click", action); return el; }
+      async function refresh() {
+        const [usersData, filesData] = await Promise.all([api("/api/admin/users"), api("/api/admin/files")]);
+        const usersBody = document.getElementById("usersBody"); usersBody.replaceChildren();
+        usersData.users.forEach(user => {
+          const row = document.createElement("tr"); cell(row, user.username); cell(row, user.school); cell(row, user.createdAt ? new Date(user.createdAt).toLocaleString() : "—"); cell(row, user.disabled ? "已停用" : "正常");
+          const actions = document.createElement("td");
+          actions.append(button(user.disabled ? "恢復" : "停用", async () => { try { await api("/api/admin/users/" + encodeURIComponent(user.username), { method: "PATCH", body: { disabled: !user.disabled } }); await refresh(); } catch (e) { showError(e.message); } }));
+          actions.append(button("重設密碼", async () => { const value = prompt(`輸入 ${user.username} 的新密碼（至少 8 位）`); if (value === null) return; try { await api("/api/admin/users/" + encodeURIComponent(user.username) + "/password", { method: "POST", body: { newPassword: value } }); alert("密碼已重設。"); } catch (e) { showError(e.message); } }));
+          actions.append(button("刪除用戶", async () => { if (!confirm(`永久刪除用戶 ${user.username} 及其所有 ICS / CalDAV 文件？`)) return; try { const result = await api("/api/admin/users/" + encodeURIComponent(user.username), { method: "DELETE" }); alert(`用戶已刪除，清除 ${result.deletedFiles} 個文件。`); await refresh(); } catch (e) { showError(e.message); } }, "danger"));
+          row.append(actions); usersBody.append(row);
+        });
+        const filesBody = document.getElementById("filesBody"); filesBody.replaceChildren();
+        filesData.files.forEach(file => {
+          const row = document.createElement("tr"); cell(row, file.filename); cell(row, file.kind); cell(row, file.owner); cell(row, file.school); cell(row, `${(file.size / 1024).toFixed(1)} KB`);
+          const actions = document.createElement("td"); actions.append(button("刪除", async () => { if (!confirm(`永久刪除 ${file.filename}？`)) return; try { await api("/api/admin/files/" + file.id, { method: "DELETE" }); await refresh(); } catch (e) { showError(e.message); } }, "danger")); row.append(actions); filesBody.append(row);
+        });
+      }
+      document.getElementById("connectButton").addEventListener("click", async () => {
+        adminKey = keyInput.value.trim(); if (!adminKey) return showError("請輸入管理員 API key。");
+        try { const me = await api("/api/admin/me"); await refresh(); document.getElementById("identity").textContent = `${me.username} · 管理員`; loginPanel.hidden = true; dashboard.hidden = false; keyInput.value = ""; showError(""); }
+        catch (error) { adminKey = ""; showError(error.message); }
+      });
+      keyInput.addEventListener("keydown", event => { if (event.key === "Enter") document.getElementById("connectButton").click(); });
+      document.getElementById("logoutButton").addEventListener("click", () => { adminKey = ""; dashboard.hidden = true; loginPanel.hidden = false; showError(""); });
+    })();
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # GitHub Pages 網頁
 
-只包含三個功能：**註冊、登錄、查看 API**。沒有文件上傳/列表/刪除，那些都在桌面程序內。
+提供**註冊、登錄、查看 API**，以及需管理員 API key 的用戶與日曆管理控制台。一般用戶的文件上傳/列表/刪除仍在桌面程序內。
 
 ## 文件
 
@@ -9,6 +9,7 @@
 | `index.html` | 登錄 |
 | `register.html` | 註冊（數學題或 Turnstile） |
 | `account.html` | 查看/複製 API key、webcal 訂閱、CalDAV 地址 |
+| `admin.html` | 管理員控制台：帳戶與 ICS / CalDAV 文件管理 |
 | `config.js` | `apiBase` 指向 Cloudflare Worker |
 | `style.css` / `app.js` | 樣式與共享邏輯 |
 
@@ -49,5 +50,6 @@ WEB_ORIGIN = "https://yourname.github.io"
 ## 說明
 
 - 登錄後把 API key 存在瀏覽器 `localStorage`，請求以 `Authorization: Bearer` 發送，不依賴 Cookie。
+- 管理入口：[admin.html](https://thomaswan564.github.io/multi-tool/admin.html)。先按 `worker/README.md` 把 `ADMIN_API_KEY` 設為 Cloudflare Worker secret；管理 key 僅留在管理頁記憶體，不寫入 `localStorage`。
 - 註冊成功後立即顯示 API key；登錄也會返回同一個 key，方便「查看 API」。
 - 換瀏覽器或清除站點數據後，用用戶名/密碼重新登錄即可再次看到 API key。

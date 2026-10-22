@@ -28,6 +28,8 @@ npx wrangler login
 npx wrangler secret put GITHUB_TOKEN
 npx wrangler secret put ENCRYPTION_KEY
 npx wrangler secret put SESSION_SECRET
+# 管理員金鑰：使用密碼管理器產生至少 32 字元的唯一隨機值
+npx wrangler secret put ADMIN_API_KEY
 # 如有配置 Turnstile，另外設置 TURNSTILE_SECRET
 npx wrangler deploy
 ```
@@ -54,16 +56,21 @@ node --test --test-isolation=none test/worker.test.mjs
 | `PUBLIC_BASE_URL` | 否 | 對外 Worker 地址 |
 | `SCHOOLS` | 否 | 默認 `gzhu,hlu` |
 | `TURNSTILE_SECRET` | 否 | 配置後註冊使用 Turnstile |
+| `ADMIN_API_KEY` | 管理功能必填 | 管理員專用高熵憑證，至少 32 字元；不等同 GitHub PAT，勿放進程式碼 |
 
 ## API 摘要
 
 - `GET /api/captcha`、`POST /api/register`、`POST /api/login`
 - `GET /api/me`、`GET /api/files`、`POST /api/upload`、`POST /api/files/delete`
 - `POST /api/guest/upload`、`GET /api/guest/files`、`POST /api/guest/delete`
+- 管理頁：[`https://thomaswan564.github.io/multi-tool/admin.html`](https://thomaswan564.github.io/multi-tool/admin.html)，需在 Worker 設定 `ADMIN_API_KEY`
+- 管理 API：`GET /api/admin/me`、`GET /api/admin/users`、`PATCH /api/admin/users/{username}`、`POST /api/admin/users/{username}/password`、`DELETE /api/admin/users/{username}`、`GET /api/admin/files`、`DELETE /api/admin/files/{id}`
 - `GET /{school}/{apiKey}.ics`、`GET /guest/{school}/{studentId}.ics`
 - CalDAV：`/caldav/{school}/{apiKey}/`，支援 `PROPFIND / REPORT / GET / PUT / DELETE`
 
 完整約定見 [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)。
+
+管理員功能包括查看帳戶與 ICS/CalDAV 文件、停用/恢復帳戶、重設帳戶密碼、刪除單一日曆文件，以及連同其 ICS/CalDAV 文件一起刪除帳戶。重設後用戶以新密碼登入；API key 不會重設。管理員身份由 Worker secret `ADMIN_API_KEY` 提供，並非公開 `users.json` 內可註冊的帳戶。登入管理頁後金鑰只留在當前頁面的記憶體，退出或關頁即清除。需更換管理金鑰時再次執行 `npx wrangler secret put ADMIN_API_KEY` 並重新輸入新值。
 
 ## 測試、加密與遷移
 
