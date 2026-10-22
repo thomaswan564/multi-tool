@@ -9,15 +9,17 @@
 <body>
   <main class="card wide admin-card">
     <h1>管理控制台</h1>
-    <p class="subtitle">管理用戶帳戶與雲端 ICS / CalDAV 文件。管理金鑰只保存在此頁記憶體中。</p>
+    <p class="subtitle">管理用戶帳戶與雲端 ICS / CalDAV 文件。管理員密碼不會保存於瀏覽器。</p>
     <div id="message" class="error" role="alert"></div>
     <section id="loginPanel" class="kv">
-      <label for="adminKey">管理員 API key</label>
-      <input id="adminKey" type="password" autocomplete="off" spellcheck="false" placeholder="輸入 Cloudflare ADMIN_API_KEY">
-      <button id="connectButton" type="button">連接管理 API</button>
+      <label for="adminPassword">管理員密碼</label>
+      <input id="adminPassword" type="password" autocomplete="current-password" placeholder="管理員密碼（至少 12 字元）">
+      <label>人機驗證</label>
+      <div id="adminTurnstile"></div>
+      <button id="connectButton" type="button">登入管理員</button>
     </section>
     <section id="dashboard" hidden>
-      <div class="admin-toolbar"><strong id="identity"></strong><button id="logoutButton" class="secondary" type="button">清除金鑰並退出</button></div>
+      <div class="admin-toolbar"><strong id="identity"></strong><button id="logoutButton" class="secondary" type="button">退出管理員</button></div>
       <h2>用戶</h2>
       <div class="table-wrap"><table><thead><tr><th>用戶名</th><th>學校</th><th>建立時間</th><th>狀態</th><th>操作</th></tr></thead><tbody id="usersBody"></tbody></table></div>
       <h2>ICS / CalDAV 文件</h2>
@@ -29,14 +31,15 @@
     (() => {
       const base = String((window.CALENDAR_CONFIG || {}).apiBase || window.location.origin).replace(/\/+$/, "");
       const message = document.getElementById("message");
-      const keyInput = document.getElementById("adminKey");
+      const passwordInput = document.getElementById("adminPassword");
       const loginPanel = document.getElementById("loginPanel");
       const dashboard = document.getElementById("dashboard");
-      let adminKey = "";
+      let adminToken = "";
+      let siteKey = "";
       const showError = (text) => { message.textContent = text || ""; message.style.display = text ? "block" : "none"; };
       async function api(path, options = {}) {
         const response = await fetch(base + path, { method: options.method || "GET", headers: {
-          Authorization: "Bearer " + adminKey,
+          Authorization: "Bearer " + adminToken,
           ...(options.body ? { "Content-Type": "application/json" } : {})
         }, body: options.body ? JSON.stringify(options.body) : undefined });
         const data = await response.json().catch(() => ({}));
@@ -45,6 +48,22 @@
       }
       function cell(row, value) { const td = document.createElement("td"); td.textContent = value == null ? "" : String(value); row.append(td); return td; }
       function button(label, action, style = "secondary") { const el = document.createElement("button"); el.type = "button"; el.className = style; el.textContent = label; el.addEventListener("click", action); return el; }
+      async function loadTurnstile() {
+        try {
+          const response = await fetch(base + "/api/captcha");
+          const data = await response.json();
+          if (!response.ok || !data.turnstileSiteKey) throw new Error(data.error || "人機驗證尚未配置");
+          siteKey = data.turnstileSiteKey;
+          const widget = document.createElement("div");
+          widget.className = "cf-turnstile";
+          widget.dataset.sitekey = siteKey;
+          widget.dataset.action = "admin_login";
+          document.getElementById("adminTurnstile").appendChild(widget);
+          const script = document.createElement("script");
+          script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+          script.async = true; script.defer = true; document.head.appendChild(script);
+        } catch (error) { showError(error.message); }
+      }
       async function refresh() {
         const [usersData, filesData] = await Promise.all([api("/api/admin/users"), api("/api/admin/files")]);
         const usersBody = document.getElementById("usersBody"); usersBody.replaceChildren();
@@ -63,12 +82,24 @@
         });
       }
       document.getElementById("connectButton").addEventListener("click", async () => {
-        adminKey = keyInput.value.trim(); if (!adminKey) return showError("請輸入管理員 API key。");
-        try { const me = await api("/api/admin/me"); await refresh(); document.getElementById("identity").textContent = `${me.username} · 管理員`; loginPanel.hidden = true; dashboard.hidden = false; keyInput.value = ""; showError(""); }
-        catch (error) { adminKey = ""; showError(error.message); }
+        const password = passwordInput.value;
+        const captchaToken = document.querySelector('input[name="cf-turnstile-response"]')?.value || "";
+        if (!password) return showError("請輸入管理員密碼。");
+        if (!siteKey || !captchaToken) return showError("請完成人機驗證。");
+        try {
+          const response = await fetch(base + "/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password, "cf-turnstile-response": captchaToken }) });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data.success) throw new Error(data.error || `HTTP ${response.status}`);
+          adminToken = data.token;
+          const me = await api("/api/admin/me");
+          await refresh();
+          document.getElementById("identity").textContent = `${me.username} · 管理員`;
+          loginPanel.hidden = true; dashboard.hidden = false; passwordInput.value = ""; showError("");
+        } catch (error) { adminToken = ""; showError(error.message); if (window.turnstile) window.turnstile.reset(); }
       });
-      keyInput.addEventListener("keydown", event => { if (event.key === "Enter") document.getElementById("connectButton").click(); });
-      document.getElementById("logoutButton").addEventListener("click", () => { adminKey = ""; dashboard.hidden = true; loginPanel.hidden = false; showError(""); });
+      passwordInput.addEventListener("keydown", event => { if (event.key === "Enter") document.getElementById("connectButton").click(); });
+      document.getElementById("logoutButton").addEventListener("click", () => { adminToken = ""; dashboard.hidden = true; loginPanel.hidden = false; showError(""); if (window.turnstile) window.turnstile.reset(); });
+      loadTurnstile();
     })();
   </script>
 </body>

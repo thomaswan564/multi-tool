@@ -1,6 +1,6 @@
 # GitHub Pages 網頁
 
-提供**註冊、登錄、查看 API**，以及需管理員 API key 的用戶與日曆管理控制台。一般用戶的文件上傳/列表/刪除仍在桌面程序內。
+提供**帶 Cloudflare Turnstile 的註冊、登錄、查看 API**，以及需管理員密碼與 Turnstile 驗證的用戶與日曆管理控制台。一般用戶的文件上傳/列表/刪除仍在桌面程序內。
 
 ## 文件
 
@@ -50,6 +50,6 @@ WEB_ORIGIN = "https://yourname.github.io"
 ## 說明
 
 - 登錄後把 API key 存在瀏覽器 `localStorage`，請求以 `Authorization: Bearer` 發送，不依賴 Cookie。
-- 管理入口：[admin.html](https://thomaswan564.github.io/multi-tool/admin.html)。先按 `worker/README.md` 把 `ADMIN_API_KEY` 設為 Cloudflare Worker secret；管理 key 僅留在管理頁記憶體，不寫入 `localStorage`。
+- 註冊、一般登入與管理員登入共用 Cloudflare Turnstile widget。管理入口：[calendar.thomaswan.uk/admin](https://calendar.thomaswan.uk/admin)，使用 `admin` 與 Worker secret `ADMIN_PASSWORD`；登入會話只留在頁面記憶體，關頁即清除。部署 secret 與 hostname 設置見 [`worker/README.md`](../worker/README.md)。
 - 註冊成功後立即顯示 API key；登錄也會返回同一個 key，方便「查看 API」。
 - 換瀏覽器或清除站點數據後，用用戶名/密碼重新登錄即可再次看到 API key。

@@ -28,11 +28,14 @@ npx wrangler login
 npx wrangler secret put GITHUB_TOKEN
 npx wrangler secret put ENCRYPTION_KEY
 npx wrangler secret put SESSION_SECRET
-# 管理員金鑰：使用密碼管理器產生至少 32 字元的唯一隨機值
-npx wrangler secret put ADMIN_API_KEY
-# 如有配置 Turnstile，另外設置 TURNSTILE_SECRET
+# Turnstile widget 的 Secret key
+npx wrangler secret put TURNSTILE_SECRET
+# 自己記得住的管理員長口令（至少 12 字元）
+npx wrangler secret put ADMIN_PASSWORD
 npx wrangler deploy
 ```
+
+`wrangler secret put` 會在終端要求輸入值；Turnstile Secret key 和管理員密碼只輸入提示，不要寫在命令列、檔案或聊天中。`wrangler.toml` 已配置公開 Site key 與允許網域 `calendar.thomaswan.uk`、`thomaswan564.github.io`；若 widget 尚未包含實際訪問網域，請在 Cloudflare Turnstile widget 的 Domains 補上。Siteverify 會核對回傳 action（`register`、`login`、`admin_login`）及 hostname。
 
 部署前可執行測試：
 
@@ -55,22 +58,26 @@ node --test --test-isolation=none test/worker.test.mjs
 | `WEB_ORIGIN` | 否 | GitHub Pages 來源，逗號分隔 |
 | `PUBLIC_BASE_URL` | 否 | 對外 Worker 地址 |
 | `SCHOOLS` | 否 | 默認 `gzhu,hlu` |
-| `TURNSTILE_SECRET` | 否 | 配置後註冊使用 Turnstile |
-| `ADMIN_API_KEY` | 管理功能必填 | 管理員專用高熵憑證，至少 32 字元；不等同 GitHub PAT，勿放進程式碼 |
+| `TURNSTILE_SECRET` | 是 | Turnstile widget Secret key；註冊、一般登入及管理員登入共用 |
+| `TURNSTILE_SITEKEY` | 是 | 公開 widget Site key，已寫入 `wrangler.toml` |
+| `TURNSTILE_HOSTNAMES` | 是 | Siteverify 允許的 hostname 清單，已寫入 `wrangler.toml` |
+| `ADMIN_PASSWORD` | 管理功能必填 | 管理員登入口令，至少 12 字元；只設為 Worker secret |
+| `ADMIN_SESSION_SECRET` | 否 | 管理會話簽名密鑰；未設置時使用既有 `SESSION_SECRET` |
+| `LOGIN_RATE_LIMITER` | 是 | Wrangler Rate Limiting binding；註冊、一般登入和管理員登入每分鐘最多 5 次/來源 IP（Cloudflare 區域內近似限速） |
 
 ## API 摘要
 
 - `GET /api/captcha`、`POST /api/register`、`POST /api/login`
 - `GET /api/me`、`GET /api/files`、`POST /api/upload`、`POST /api/files/delete`
 - `POST /api/guest/upload`、`GET /api/guest/files`、`POST /api/guest/delete`
-- 管理頁：[`https://thomaswan564.github.io/multi-tool/admin.html`](https://thomaswan564.github.io/multi-tool/admin.html)，需在 Worker 設定 `ADMIN_API_KEY`
+- 管理頁：[`https://calendar.thomaswan.uk/admin`](https://calendar.thomaswan.uk/admin)，使用 `admin` + Worker secret `ADMIN_PASSWORD`，並通過共用 Turnstile 驗證。登入會話有效 8 小時，僅存於頁面記憶體。
 - 管理 API：`GET /api/admin/me`、`GET /api/admin/users`、`PATCH /api/admin/users/{username}`、`POST /api/admin/users/{username}/password`、`DELETE /api/admin/users/{username}`、`GET /api/admin/files`、`DELETE /api/admin/files/{id}`
 - `GET /{school}/{apiKey}.ics`、`GET /guest/{school}/{studentId}.ics`
 - CalDAV：`/caldav/{school}/{apiKey}/`，支援 `PROPFIND / REPORT / GET / PUT / DELETE`
 
 完整約定見 [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md)。
 
-管理員功能包括查看帳戶與 ICS/CalDAV 文件、停用/恢復帳戶、重設帳戶密碼、刪除單一日曆文件，以及連同其 ICS/CalDAV 文件一起刪除帳戶。重設後用戶以新密碼登入；API key 不會重設。管理員身份由 Worker secret `ADMIN_API_KEY` 提供，並非公開 `users.json` 內可註冊的帳戶。登入管理頁後金鑰只留在當前頁面的記憶體，退出或關頁即清除。需更換管理金鑰時再次執行 `npx wrangler secret put ADMIN_API_KEY` 並重新輸入新值。
+管理員功能包括查看帳戶與 ICS/CalDAV 文件、停用/恢復帳戶、重設帳戶密碼、刪除單一日曆文件，以及連同其 ICS/CalDAV 文件一起刪除帳戶。重設後用戶以新密碼登入；API key 不會重設。管理員帳戶 `admin` 不在一般用戶資料庫中；登入使用 `ADMIN_PASSWORD`、Turnstile 及 8 小時簽名會話。舊的 `ADMIN_API_KEY` 不再用於管理頁；確認新登入正常後可從 Worker secrets 移除舊值。
 
 ## 測試、加密與遷移
 

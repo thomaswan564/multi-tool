@@ -19,6 +19,9 @@
     <label for="password">密码</label>
     <input id="password" type="password" autocomplete="current-password" placeholder="密码">
 
+    <label>人机验证</label>
+    <div id="turnstileBox"></div>
+
     <button id="loginButton" type="button">登录</button>
 
     <p class="muted" style="margin-top:16px;">
@@ -37,6 +40,27 @@
 
     const message = document.getElementById("message");
     const button = document.getElementById("loginButton");
+    let turnstileSiteKey = "";
+
+    async function loadTurnstile() {
+      try {
+        const data = await CalendarWeb.apiRequest("/api/captcha");
+        turnstileSiteKey = data.turnstileSiteKey || "";
+        if (!turnstileSiteKey) throw new Error("服务器尚未配置人机验证。");
+        const widget = document.createElement("div");
+        widget.className = "cf-turnstile";
+        widget.dataset.sitekey = turnstileSiteKey;
+        widget.dataset.action = "login";
+        document.getElementById("turnstileBox").appendChild(widget);
+        const script = document.createElement("script");
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      } catch (error) {
+        CalendarWeb.showMessage(message, error.message, true);
+      }
+    }
 
     async function login() {
       const username = document.getElementById("username").value.trim();
@@ -46,6 +70,11 @@
         CalendarWeb.showMessage(message, "请输入用户名和密码。", true);
         return;
       }
+      const captchaToken = document.querySelector('input[name="cf-turnstile-response"]')?.value || "";
+      if (!turnstileSiteKey || !captchaToken) {
+        CalendarWeb.showMessage(message, "请完成人机验证。", true);
+        return;
+      }
 
       button.disabled = true;
       CalendarWeb.showMessage(message, "", false);
@@ -53,12 +82,13 @@
       try {
         const data = await CalendarWeb.apiRequest("/api/login", {
           method: "POST",
-          body: { username, password }
+          body: { username, password, "cf-turnstile-response": captchaToken }
         });
         CalendarWeb.saveSession(data);
         window.location.href = "account.html";
       } catch (error) {
         CalendarWeb.showMessage(message, error.message, true);
+        if (window.turnstile) window.turnstile.reset();
         button.disabled = false;
       }
     }
@@ -67,6 +97,7 @@
     document.getElementById("password").addEventListener("keydown", function (event) {
       if (event.key === "Enter") login();
     });
+    loadTurnstile();
   </script>
 </body>
 </html>

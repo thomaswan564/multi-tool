@@ -83,8 +83,13 @@ export default {
 };
 
 async function proxyGitHubPages(request, url) {
+  const upstreamPath = url.pathname === "/"
+    ? "/multi-tool/"
+    : url.pathname === "/admin"
+      ? "/multi-tool/admin.html"
+      : `/multi-tool${url.pathname}`;
   const pagesUrl = new URL(
-    url.pathname === "/" ? "/multi-tool/" : `/multi-tool${url.pathname}`,
+    upstreamPath,
     "https://thomaswan564.github.io"
   );
   pagesUrl.search = url.search;
@@ -116,18 +121,10 @@ async function handleApi(request, env, url, cors) {
   }
 
   if (path === "/api/captcha" && method === "GET") {
-    if (env.TURNSTILE_SECRET) {
-      return json(
-        {
-          success: true,
-          turnstileSiteKey: env.TURNSTILE_SITEKEY || "0x4AAAAAAFbtR0I1OAiFBJ-q"
-        },
-        200,
-        cors
-      );
+    if (!env.TURNSTILE_SECRET || !env.TURNSTILE_SITEKEY || !env.TURNSTILE_HOSTNAMES) {
+      return json({ success: false, error: "人机验证尚未配置" }, 503, cors);
     }
-    const captcha = await generateCaptcha(config.sessionSecret);
-    return json({ success: true, ...captcha }, 200, cors);
+    return json({ success: true, turnstileSiteKey: env.TURNSTILE_SITEKEY }, 200, cors);
   }
 
   if (path === "/api/register" && method === "POST") {
@@ -211,20 +208,20 @@ async function handleApi(request, env, url, cors) {
 }
 
 /* ========================================================================== */
-/* Admin API: ADMIN_API_KEY is a separate, user-managed Worker secret.         */
+/* Admin API: password + Turnstile, protected by a short-lived signed session. */
 /* ========================================================================== */
 
 async function handleAdminApi(request, env, url, config, cors) {
   const method = request.method.toUpperCase();
-  const secret = String(env.ADMIN_API_KEY || "");
-  if (secret.length < 32) {
-    return json({ success: false, error: "管理員尚未配置，請先設定 ADMIN_API_KEY（至少 32 字元）" }, 503, cors);
+  if (method === "POST" && url.pathname === "/api/admin/login") {
+    return adminLogin(request, env, cors);
+  }
+  if (!env.ADMIN_PASSWORD || String(env.ADMIN_PASSWORD).length < 12 || !adminSessionSecret(env)) {
+    return json({ success: false, error: "管理員密碼服務尚未配置" }, 503, cors);
   }
   const supplied = (request.headers.get("Authorization") || "").match(/^Bearer\s+(.+)$/i)?.[1]?.trim() || "";
-  const [expectedHash, suppliedHash] = await Promise.all([sha256Bytes(secret), sha256Bytes(supplied)]);
-  let diff = supplied.length === secret.length ? 0 : 1;
-  for (let i = 0; i < expectedHash.length; i++) diff |= expectedHash[i] ^ suppliedHash[i];
-  if (diff !== 0) return json({ success: false, error: "管理員 API key 無效" }, 401, cors);
+  const session = await verifyAdminSession(supplied, adminSessionSecret(env));
+  if (!session) return json({ success: false, error: "管理員登入已過期，請重新登入" }, 401, cors);
   if (method === "GET" && url.pathname === "/api/admin/me") {
     return json({ success: true, username: "admin", role: "admin", permissions: ["users.read", "users.update", "users.delete", "files.read", "files.delete"] }, 200, cors);
   }
@@ -279,6 +276,58 @@ async function handleAdminApi(request, env, url, config, cors) {
   return json({ success: false, error: "Not Found" }, 404, cors);
 }
 
+async function adminLogin(request, env, cors) {
+  if (!env.ADMIN_PASSWORD || String(env.ADMIN_PASSWORD).length < 12 || !adminSessionSecret(env)
+    || !env.TURNSTILE_SECRET || !env.TURNSTILE_SITEKEY || !env.TURNSTILE_HOSTNAMES) {
+    return json({ success: false, error: "管理員登入尚未配置" }, 503, cors);
+  }
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const rate = await enforceLoginRateLimit(env, ip, "admin");
+  if (!rate) return json({ success: false, error: "嘗試次數過多，請稍後再試" }, 429, cors);
+  const body = await safeJson(request);
+  const captchaOk = await verifyTurnstile(
+    String(body["cf-turnstile-response"] || ""), env.TURNSTILE_SECRET, ip, "admin_login", request.url, env
+  );
+  if (!captchaOk) return json({ success: false, error: "人機驗證失敗，請重試" }, 400, cors);
+  const password = String(body.password || "");
+  const sessionSecret = adminSessionSecret(env);
+  const [expected, supplied] = await Promise.all([sha256Bytes(env.ADMIN_PASSWORD), sha256Bytes(password)]);
+  if (password.length !== String(env.ADMIN_PASSWORD).length || !timingSafeEqualBytes(expected, supplied)) {
+    return json({ success: false, error: "管理員密碼錯誤" }, 401, cors);
+  }
+  const expiresAt = Date.now() + 8 * 60 * 60 * 1000;
+  const data = bytesToBase64Url(new TextEncoder().encode(JSON.stringify({ sub: "admin", exp: expiresAt })));
+  const token = `${data}.${await hmacSign(`admin-session:${data}`, sessionSecret)}`;
+  return json({ success: true, username: "admin", token, expiresAt }, 200, cors);
+}
+
+async function verifyAdminSession(token, secret) {
+  const parts = String(token || "").split(".");
+  if (parts.length !== 2 || !timingSafeEqual(parts[1], await hmacSign(`admin-session:${parts[0]}`, secret))) return false;
+  try {
+    const session = JSON.parse(new TextDecoder().decode(base64UrlToBytes(parts[0])));
+    return session.sub === "admin" && Number.isFinite(session.exp) && Date.now() < session.exp;
+  } catch { return false; }
+}
+
+function adminSessionSecret(env) {
+  const secret = String(env.ADMIN_SESSION_SECRET || env.SESSION_SECRET || "");
+  return secret.length >= 32 ? secret : "";
+}
+
+async function enforceLoginRateLimit(env, ip, scope) {
+  if (!env.LOGIN_RATE_LIMITER) return false;
+  const { success } = await env.LOGIN_RATE_LIMITER.limit({ key: `${scope}:${ip}` });
+  return success;
+}
+
+function timingSafeEqualBytes(left, right) {
+  if (left.length !== right.length) return false;
+  let diff = 0;
+  for (let i = 0; i < left.length; i += 1) diff |= left[i] ^ right[i];
+  return diff === 0;
+}
+
 async function sha256Bytes(value) {
   return new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(value))));
 }
@@ -329,6 +378,13 @@ async function listAdminFiles(env, config) {
 /* ========================================================================== */
 
 async function registerUser(request, env, config, cors) {
+  if (!env.TURNSTILE_SECRET || !env.TURNSTILE_SITEKEY || !env.TURNSTILE_HOSTNAMES) {
+    return json({ success: false, error: "人机验证尚未配置" }, 503, cors);
+  }
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (!await enforceLoginRateLimit(env, ip, "register")) {
+    return json({ success: false, error: "操作过于频繁，请稍后再试" }, 429, cors);
+  }
   const body = await safeJson(request);
   const username = sanitizeUsername(body.username);
   const password = String(body.password || "");
@@ -351,17 +407,9 @@ async function registerUser(request, env, config, cors) {
     return json({ success: false, error: "请选择有效的高校" }, 400, cors);
   }
 
-  const captchaOk = env.TURNSTILE_SECRET
-    ? await verifyTurnstile(
-        String(body["cf-turnstile-response"] || ""),
-        env.TURNSTILE_SECRET,
-        request.headers.get("CF-Connecting-IP") || ""
-      )
-    : await verifyCaptcha(
-        String(body.captchaToken || ""),
-        String(body.captchaAnswer || ""),
-        config.sessionSecret
-      );
+  const captchaOk = await verifyTurnstile(
+    String(body["cf-turnstile-response"] || ""), env.TURNSTILE_SECRET, ip, "register", request.url, env, request.headers.get("Origin")
+  );
 
   if (!captchaOk) {
     return json({ success: false, error: "人机验证失败，请重试" }, 400, cors);
@@ -394,13 +442,23 @@ async function registerUser(request, env, config, cors) {
 }
 
 async function loginUser(request, env, config, cors) {
+  if (!env.TURNSTILE_SECRET || !env.TURNSTILE_SITEKEY || !env.TURNSTILE_HOSTNAMES) {
+    return json({ success: false, error: "人机验证尚未配置" }, 503, cors);
+  }
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (!await enforceLoginRateLimit(env, ip, "login")) {
+    return json({ success: false, error: "登录尝试过于频繁，请稍后再试" }, 429, cors);
+  }
   const body = await safeJson(request);
   const username = String(body.username || "").trim();
   const password = String(body.password || "");
-
   if (!username || !password) {
     return json({ success: false, error: "请输入用户名和密码" }, 400, cors);
   }
+  const captchaOk = await verifyTurnstile(
+    String(body["cf-turnstile-response"] || ""), env.TURNSTILE_SECRET, ip, "login", request.url, env, request.headers.get("Origin")
+  );
+  if (!captchaOk) return json({ success: false, error: "人机验证失败，请重试" }, 400, cors);
 
   const users = await loadUsers(env);
   const usernameHash = await sha256Hex(username);
@@ -1450,16 +1508,24 @@ function timingSafeEqual(a, b) {
   return result === 0;
 }
 
-async function verifyTurnstile(token, secret, remoteIp) {
-  if (!token) return false;
+async function verifyTurnstile(token, secret, remoteIp, expectedAction, requestUrl, env, origin = "") {
+  if (!token || token.length > 2048 || !secret || !env.TURNSTILE_HOSTNAMES) return false;
+  let expectedHostname;
+  try { expectedHostname = new URL(origin || requestUrl).hostname.toLowerCase(); } catch { return false; }
+  const allowedHostnames = String(env.TURNSTILE_HOSTNAMES).split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
+  if (!allowedHostnames.includes(expectedHostname)) return false;
   const body = new URLSearchParams({ secret, response: token, remoteip: remoteIp });
   const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
     method: "POST",
-    body
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+    signal: AbortSignal.timeout(10_000)
   });
   if (!response.ok) return false;
   const result = await response.json();
-  return result.success === true;
+  return result.success === true
+    && result.action === expectedAction
+    && String(result.hostname || "").toLowerCase() === expectedHostname;
 }
 
 /* ========================================================================== */

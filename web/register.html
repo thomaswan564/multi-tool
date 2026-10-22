@@ -31,10 +31,6 @@
 
     <div id="captchaArea">
       <label>人机验证</label>
-      <div class="captcha">
-        <span id="captchaQuestion" class="q">加载中...</span>
-        <input id="captchaAnswer" type="text" inputmode="numeric" autocomplete="off" placeholder="答案">
-      </div>
       <div id="turnstileBox"></div>
     </div>
 
@@ -52,19 +48,12 @@
   <script>
     const message = document.getElementById("message");
     const button = document.getElementById("registerButton");
-    const captchaQuestion = document.getElementById("captchaQuestion");
-    const captchaAnswer = document.getElementById("captchaAnswer");
     const resultBox = document.getElementById("resultBox");
 
-    let captchaToken = "";
     let turnstileSiteKey = "";
-    let captchaReady = false;
 
     function loadTurnstile(siteKey) {
       turnstileSiteKey = siteKey;
-      captchaQuestion.textContent = "请完成人机验证";
-      captchaAnswer.style.display = "none";
-
       const box = document.getElementById("turnstileBox");
       const widget = document.createElement("div");
       widget.className = "cf-turnstile";
@@ -77,7 +66,6 @@
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);
-      captchaReady = true;
     }
 
     async function loadCaptcha() {
@@ -87,13 +75,8 @@
           loadTurnstile(data.turnstileSiteKey);
           return;
         }
-        captchaToken = data.token || "";
-        captchaQuestion.textContent = (data.question || "?") + " = ?";
-        captchaAnswer.style.display = "";
-        captchaAnswer.value = "";
-        captchaReady = true;
+        throw new Error("服务器尚未配置人机验证。");
       } catch (error) {
-        captchaQuestion.textContent = "验证码加载失败";
         CalendarWeb.showMessage(message, error.message, true);
       }
     }
@@ -122,19 +105,10 @@
         return;
       }
 
-      let captchaValue = "";
-      if (turnstileSiteKey) {
-        captchaValue = turnstileValue();
-        if (!captchaValue) {
-          CalendarWeb.showMessage(message, "请完成人机验证。", true);
-          return;
-        }
-      } else {
-        captchaValue = captchaAnswer.value.trim();
-        if (!captchaValue) {
-          CalendarWeb.showMessage(message, "请填写人机验证答案。", true);
-          return;
-        }
+      const captchaValue = turnstileValue();
+      if (!turnstileSiteKey || !captchaValue) {
+        CalendarWeb.showMessage(message, "请完成人机验证。", true);
+        return;
       }
 
       button.disabled = true;
@@ -147,9 +121,7 @@
             username,
             password,
             school,
-            captchaToken,
-            captchaAnswer: captchaValue,
-            "cf-turnstile-response": turnstileValue()
+            "cf-turnstile-response": captchaValue
           }
         });
 
@@ -195,7 +167,7 @@
         resultBox.appendChild(accountLink);
       } catch (error) {
         CalendarWeb.showMessage(message, error.message, true);
-        if (!turnstileSiteKey) loadCaptcha();
+        if (window.turnstile) window.turnstile.reset();
       } finally {
         button.disabled = false;
       }

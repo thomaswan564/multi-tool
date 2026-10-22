@@ -9,7 +9,8 @@ pattern = "calendar.thomaswan.uk"
 custom_domain = true
 
 # 非敏感配置。敏感值用 wrangler secret put 設置：
-#   GITHUB_TOKEN, ENCRYPTION_KEY, SESSION_SECRET, TURNSTILE_SECRET, ADMIN_API_KEY
+#   GITHUB_TOKEN, ENCRYPTION_KEY, SESSION_SECRET, TURNSTILE_SECRET,
+#   ADMIN_PASSWORD, ADMIN_SESSION_SECRET
 [vars]
 GITHUB_OWNER = "thomaswan564"
 GITHUB_REPO = "multi-tool"
@@ -18,4 +19,13 @@ GITHUB_PATH = "ics"
 PUBLIC_BASE_URL = "https://calendar.thomaswan.uk"
 WEB_ORIGIN = "https://thomaswan564.github.io"
 SCHOOLS = "gzhu,hlu"
-# TURNSTILE_SITEKEY = "0x..."
+TURNSTILE_SITEKEY = "0x4AAAAAAFbtR0I1OAiFBJ-q"
+TURNSTILE_HOSTNAMES = "calendar.thomaswan.uk,thomaswan564.github.io"
+
+[[ratelimits]]
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "784216903"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
