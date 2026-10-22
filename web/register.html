@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>注册 · 课程表日历</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <h1>📅 注册账户</h1>
+    <p class="subtitle">注册后会生成 API key，用于桌面程序加密上传与 CalDAV 登录。</p>
+
+    <div id="message" class="error" role="alert"></div>
+
+    <label for="school">高校</label>
+    <select id="school">
+      <option value="gzhu">广州大学</option>
+      <option value="hlu">私立华联大学</option>
+    </select>
+
+    <label for="username">用户名</label>
+    <input id="username" type="text" autocomplete="username" placeholder="字母、数字、下划线或连字符">
+    <p class="muted" style="margin:-8px 0 0;">1–40 位，仅限字母、数字、下划线和连字符。</p>
+
+    <label for="password">密码</label>
+    <input id="password" type="password" autocomplete="new-password" placeholder="至少 4 位">
+
+    <label for="confirm">确认密码</label>
+    <input id="confirm" type="password" autocomplete="new-password" placeholder="再次输入密码">
+
+    <div id="captchaArea">
+      <label>人机验证</label>
+      <div class="captcha">
+        <span id="captchaQuestion" class="q">加载中...</span>
+        <input id="captchaAnswer" type="text" inputmode="numeric" autocomplete="off" placeholder="答案">
+      </div>
+      <div id="turnstileBox"></div>
+    </div>
+
+    <button id="registerButton" type="button">注册</button>
+
+    <div id="resultBox" class="ok" style="margin-top:18px;"></div>
+
+    <div class="link">
+      已有账户？<a href="index.html">去登录</a>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const message = document.getElementById("message");
+    const button = document.getElementById("registerButton");
+    const captchaQuestion = document.getElementById("captchaQuestion");
+    const captchaAnswer = document.getElementById("captchaAnswer");
+    const resultBox = document.getElementById("resultBox");
+
+    let captchaToken = "";
+    let turnstileSiteKey = "";
+    let captchaReady = false;
+
+    function loadTurnstile(siteKey) {
+      turnstileSiteKey = siteKey;
+      captchaQuestion.textContent = "请完成人机验证";
+      captchaAnswer.style.display = "none";
+
+      const box = document.getElementById("turnstileBox");
+      const widget = document.createElement("div");
+      widget.className = "cf-turnstile";
+      widget.dataset.sitekey = siteKey;
+      widget.dataset.action = "register";
+      box.appendChild(widget);
+
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+      captchaReady = true;
+    }
+
+    async function loadCaptcha() {
+      try {
+        const data = await CalendarWeb.apiRequest("/api/captcha");
+        if (data.turnstileSiteKey) {
+          loadTurnstile(data.turnstileSiteKey);
+          return;
+        }
+        captchaToken = data.token || "";
+        captchaQuestion.textContent = (data.question || "?") + " = ?";
+        captchaAnswer.style.display = "";
+        captchaAnswer.value = "";
+        captchaReady = true;
+      } catch (error) {
+        captchaQuestion.textContent = "验证码加载失败";
+        CalendarWeb.showMessage(message, error.message, true);
+      }
+    }
+
+    function turnstileValue() {
+      const input = document.querySelector('input[name="cf-turnstile-response"]');
+      return input ? input.value : "";
+    }
+
+    async function register() {
+      const school = document.getElementById("school").value;
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const confirm = document.getElementById("confirm").value;
+
+      if (!username || !password) {
+        CalendarWeb.showMessage(message, "请填写用户名和密码。", true);
+        return;
+      }
+      if (password.length < 4) {
+        CalendarWeb.showMessage(message, "密码至少 4 位。", true);
+        return;
+      }
+      if (password !== confirm) {
+        CalendarWeb.showMessage(message, "两次输入的密码不一致。", true);
+        return;
+      }
+
+      let captchaValue = "";
+      if (turnstileSiteKey) {
+        captchaValue = turnstileValue();
+        if (!captchaValue) {
+          CalendarWeb.showMessage(message, "请完成人机验证。", true);
+          return;
+        }
+      } else {
+        captchaValue = captchaAnswer.value.trim();
+        if (!captchaValue) {
+          CalendarWeb.showMessage(message, "请填写人机验证答案。", true);
+          return;
+        }
+      }
+
+      button.disabled = true;
+      CalendarWeb.showMessage(message, "", false);
+
+      try {
+        const data = await CalendarWeb.apiRequest("/api/register", {
+          method: "POST",
+          body: {
+            username,
+            password,
+            school,
+            captchaToken,
+            captchaAnswer: captchaValue,
+            "cf-turnstile-response": turnstileValue()
+          }
+        });
+
+        CalendarWeb.saveSession(data);
+
+        resultBox.style.display = "block";
+        resultBox.textContent = "";
+
+        const title = document.createElement("strong");
+        title.textContent = "✅ 注册成功！请保存 API key：";
+        resultBox.appendChild(title);
+
+        const keyLine = document.createElement("div");
+        keyLine.className = "field-row";
+        keyLine.style.marginTop = "10px";
+
+        const keyCode = document.createElement("input");
+        keyCode.value = data.apiKey;
+        keyCode.readOnly = true;
+        keyCode.style.fontFamily = "ui-monospace, Menlo, Consolas, monospace";
+
+        const copyButton = document.createElement("button");
+        copyButton.className = "copy";
+        copyButton.textContent = "复制";
+        CalendarWeb.bindCopy(copyButton, function () {
+          return data.apiKey;
+        });
+
+        keyLine.appendChild(keyCode);
+        keyLine.appendChild(copyButton);
+        resultBox.appendChild(keyLine);
+
+        const note = document.createElement("p");
+        note.className = "muted";
+        note.textContent = "API key 也會用於 CalDAV 用戶名/密碼。丟失後無法解密已上傳的日曆。";
+        resultBox.appendChild(note);
+
+        const accountLink = document.createElement("a");
+        accountLink.href = "account.html";
+        accountLink.textContent = "进入账户页查看订阅地址 →";
+        accountLink.style.display = "inline-block";
+        accountLink.style.marginTop = "8px";
+        resultBox.appendChild(accountLink);
+      } catch (error) {
+        CalendarWeb.showMessage(message, error.message, true);
+        if (!turnstileSiteKey) loadCaptcha();
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    button.addEventListener("click", register);
+    loadCaptcha();
+  </script>
+</body>
+</html>

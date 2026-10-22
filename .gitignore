@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+v3.0/cloud_config.json
+v3.0/saved_login.json
+v3.0/cached_courses.json
+v3.0/tests/_tmp_config/
+worker/.wrangler/
+worker/.build_tmp/
+.wrangler/
+.build_tmp/
+.env

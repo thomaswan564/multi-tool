@@ -1,16 +1,40 @@
 # 教務輔助工具 | Academic Affairs Assistant
 
+> **日曆服務已整合：**原 [`calendar` 倉庫](https://github.com/thomaswan564/calendar)已停止維護並封存；課程日曆、ICS/CalDAV 網站及 Worker 的程式碼與部署文件都在本倉庫。自行部署請看 [`worker/README.md`](worker/README.md)。
+
 A desktop **Academic Affairs Assistant** built with **Python + Tkinter + Playwright**, providing automatic timetable retrieval, PDF export, and automated course selection.
 
-> **Current Version: v1.2**
+> **Current Version: v3.0**
 >
 > This project is mainly developed as a personal learning project for Python GUI development, Playwright browser automation, web interaction, and academic affairs system automation.
 
 本項目是一個基於 **Python + Tkinter + Playwright** 開發的桌面端**教務輔助工具**，提供課程表自動獲取、PDF 下載以及自主選課自動化等功能。
 
-> **當前版本：v1.2**
+> **當前版本：v3.0**
 >
 > 本項目主要用於學習 Python GUI、Playwright 瀏覽器自動化、網頁交互及教務系統自動化相關技術。
+
+---
+
+## v3.0 Integrated Calendar Service
+
+The current release keeps the desktop program, registration/API pages, Cloudflare Worker source, and deployment configuration in this `multi-tool` repository. The Worker stores encrypted registered calendars and plaintext guest calendars in this repository's `users.json` and `ics/` paths. The service remains reachable at `https://calendar.thomaswan.uk`; it is no longer sourced from a separate `calendar` code repository.
+
+- Desktop app and Python tests: [`v3.0/`](v3.0/README.md)
+- Registration and account pages: [`web/`](web/README.md), published at `https://thomaswan564.github.io/multi-tool/`
+- Cloudflare Worker and API tests: [`worker/`](worker/README.md)
+- Shared storage/API design: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
+To run the current desktop app:
+
+```powershell
+cd v3.0
+pip install -r requirements.txt
+python -m playwright install
+python code-multi-tool-v3.0.py
+```
+
+The `worker/wrangler.toml` configuration targets this repository's `主要的` branch. Set the Worker secret `GITHUB_TOKEN` to a token that can read and write this repository's contents.
 
 ---
 
@@ -234,16 +258,16 @@ Clone or download the repository, then open PowerShell / CMD in the project dire
 
 克隆或下載本項目後，在項目目錄打開 PowerShell / CMD。
 
-Run:
+Run the current v3.0 application:
 
 ```powershell
-py code-multi-tool-v1.0.1.py
+py v3.0\code-multi-tool-v3.0.py
 ```
 
 If your Python command is `python`, you can also use:
 
 ```powershell
-python code-multi-tool-v1.0.1.py
+python v3.0\code-multi-tool-v3.0.py
 ```
 
 The program will open a Tkinter graphical interface.

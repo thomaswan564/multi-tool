@@ -1,0 +1,10 @@
+{
+  "name": "calendar-worker-v3",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Calendar backend worker (JSON API + GitHub storage + CalDAV)",
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>我的 API · 课程表日历</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card wide">
+    <h1>📅 我的 API</h1>
+    <p class="subtitle">
+      这里只显示账户信息与订阅地址。上传、文件列表、二维码与 CalDAV 设置请使用桌面程序。
+    </p>
+
+    <div id="message" class="error" role="alert"></div>
+
+    <div id="content" style="display:none;">
+      <div class="kv">
+        <div class="k">用户名 / 高校</div>
+        <div class="v" id="userLine"></div>
+      </div>
+
+      <div class="kv">
+        <div class="k">API key</div>
+        <div class="field-row">
+          <input id="apiKey" readonly>
+          <button id="copyApiKey" class="copy" type="button">复制</button>
+        </div>
+        <p class="muted" style="margin:8px 0 0;">
+          这个 key 同时是桌面程序的上传凭据、CalDAV 用户名/密码和日曆解密密钥，请妥善保存。
+        </p>
+      </div>
+
+      <div class="kv">
+        <div class="k">订阅地址（webcal）</div>
+        <div class="field-row">
+          <input id="webcalUrl" readonly>
+          <button id="copyWebcal" class="copy" type="button">复制</button>
+        </div>
+        <p class="muted" style="margin:8px 0 0;">
+          在 iPhone/iPad 日历中「添加日历 → 添加订阅日历」粘贴此地址；Android 可用支持 webcal 的日历应用。
+        </p>
+      </div>
+
+      <div class="kv">
+        <div class="k">订阅地址（https）</div>
+        <div class="field-row">
+          <input id="subscriptionUrl" readonly>
+          <button id="copySubscription" class="copy" type="button">复制</button>
+        </div>
+      </div>
+
+      <div class="kv" id="caldavBlock">
+        <div class="k">CalDAV（完整读写）</div>
+        <div class="field-row">
+          <input id="caldavUrl" readonly>
+          <button id="copyCaldav" class="copy" type="button">复制</button>
+        </div>
+        <p class="muted" style="margin:8px 0 0;">
+          Apple 日历：添加账户 → 其他 → CalDAV。服务器地址填上方 URL，用户名和密码都填 API key。
+        </p>
+      </div>
+
+      <hr>
+      <button id="logoutButton" class="secondary" type="button">退出登录</button>
+    </div>
+
+    <div class="link">
+      <a href="index.html">返回登录页</a>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const message = document.getElementById("message");
+    const content = document.getElementById("content");
+    const apiKey = CalendarWeb.requireLogin();
+
+    async function loadAccount() {
+      try {
+        const data = await CalendarWeb.apiRequest("/api/me", { auth: true });
+        CalendarWeb.saveSession(data);
+
+        document.getElementById("userLine").textContent =
+          (data.username || "user") + " · " + (data.school || "-");
+
+        document.getElementById("apiKey").value = data.apiKey || apiKey;
+        document.getElementById("webcalUrl").value = data.webcalUrl || "";
+        document.getElementById("subscriptionUrl").value = data.subscriptionUrl || "";
+        document.getElementById("caldavUrl").value = data.caldavUrl || "";
+
+        CalendarWeb.bindCopy(document.getElementById("copyApiKey"), function () {
+          return document.getElementById("apiKey").value;
+        });
+        CalendarWeb.bindCopy(document.getElementById("copyWebcal"), function () {
+          return document.getElementById("webcalUrl").value;
+        });
+        CalendarWeb.bindCopy(document.getElementById("copySubscription"), function () {
+          return document.getElementById("subscriptionUrl").value;
+        });
+        CalendarWeb.bindCopy(document.getElementById("copyCaldav"), function () {
+          return document.getElementById("caldavUrl").value;
+        });
+
+        content.style.display = "block";
+        document.getElementById("logoutButton").addEventListener("click", function () {
+          CalendarWeb.clearSession();
+          window.location.replace("index.html");
+        });
+      } catch (error) {
+        CalendarWeb.showMessage(message, error.message, true);
+        CalendarWeb.clearSession();
+        setTimeout(function () {
+          window.location.replace("index.html");
+        }, 1200);
+      }
+    }
+
+    if (apiKey) {
+      loadAccount();
+    }
+  </script>
+</body>
+</html>

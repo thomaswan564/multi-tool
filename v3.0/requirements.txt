@@ -1,0 +1,6 @@
+playwright>=1.40
+pdfplumber>=0.11
+requests>=2.31
+cryptography>=42
+qrcode>=7.4
+Pillow>=10

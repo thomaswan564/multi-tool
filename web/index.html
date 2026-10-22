@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 · 课程表日历</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <h1>📅 课程表日历</h1>
+    <p class="subtitle">登录以查看你的 API key、订阅地址与 CalDAV 地址。</p>
+
+    <div id="message" class="error" role="alert"></div>
+
+    <label for="username">用户名</label>
+    <input id="username" type="text" autocomplete="username" placeholder="注册时填写的用户名">
+
+    <label for="password">密码</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="密码">
+
+    <button id="loginButton" type="button">登录</button>
+
+    <p class="muted" style="margin-top:16px;">
+      本网页只负责注册、登录、查看 API。上传、文件列表、二维码与 CalDAV 设置请使用桌面程序。
+    </p>
+
+    <div class="link">
+      还没有账户？<a href="register.html">去注册</a>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    CalendarWeb.redirectIfLoggedIn();
+
+    const message = document.getElementById("message");
+    const button = document.getElementById("loginButton");
+
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!username || !password) {
+        CalendarWeb.showMessage(message, "请输入用户名和密码。", true);
+        return;
+      }
+
+      button.disabled = true;
+      CalendarWeb.showMessage(message, "", false);
+
+      try {
+        const data = await CalendarWeb.apiRequest("/api/login", {
+          method: "POST",
+          body: { username, password }
+        });
+        CalendarWeb.saveSession(data);
+        window.location.href = "account.html";
+      } catch (error) {
+        CalendarWeb.showMessage(message, error.message, true);
+        button.disabled = false;
+      }
+    }
+
+    button.addEventListener("click", login);
+    document.getElementById("password").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") login();
+    });
+  </script>
+</body>
+</html>

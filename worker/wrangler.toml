@@ -1,0 +1,17 @@
+name = "calendar"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+workers_dev = true
+observability = { enabled = false }
+
+# 非敏感配置。敏感值用 wrangler secret put 設置：
+#   GITHUB_TOKEN, ENCRYPTION_KEY, SESSION_SECRET, TURNSTILE_SECRET
+[vars]
+GITHUB_OWNER = "thomaswan564"
+GITHUB_REPO = "multi-tool"
+GITHUB_BRANCH = "主要的"
+GITHUB_PATH = "ics"
+PUBLIC_BASE_URL = "https://calendar.thomaswan.uk"
+WEB_ORIGIN = "https://thomaswan564.github.io"
+SCHOOLS = "gzhu,hlu"
+# TURNSTILE_SITEKEY = "0x..."
