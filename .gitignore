@@ -8,4 +8,7 @@ worker/.wrangler/
 worker/.build_tmp/
 .wrangler/
 .build_tmp/
+v3.0/build/
+v3.0/dist/
+v3.0/*.spec
 .env

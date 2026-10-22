@@ -46,7 +46,7 @@ from cloud_client import (  # noqa: E402
     webcal_url,
 )
 
-APP_VERSION = "3.0.0"
+APP_VERSION = "3.0.1"
 
 # 根据系统UI默认字体
 SYS_FONT = "PingFang SC" if sys.platform == "darwin" else "Microsoft YaHei"

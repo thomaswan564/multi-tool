@@ -1,4 +1,4 @@
-# 教務輔助工具 v3.0
+# 教務輔助工具 v3.0.1
 
 v3.0 把主要功能放回桌面程序：生成 ICS、加密上傳、雲端文件列表/刪除、webcal 二維碼、CalDAV 顯示。網頁只保留註冊、登錄、查看 API。
 
@@ -20,6 +20,12 @@ python -m playwright install
 ```
 
 `qrcode` 已 vendored 到 `v3.0/_vendor`；若使用其他 Python 環境，建議 `pip install qrcode[pil]`。
+
+## Windows EXE
+
+到 [GitHub Releases](https://github.com/thomaswan564/multi-tool/releases/latest) 下載 `Multi-Tool-v3.0.1.exe`，無需另外安裝 Python。程序會使用電腦已安裝的 Chrome、Edge、Firefox 或 Brave 執行教務系統自動化；電腦需至少安裝其中一種瀏覽器。首次啟動若 Windows SmartScreen 顯示提示，請先確認檔案來自本倉庫的 Releases。
+
+維護者可在 Windows 開發環境安裝 `requirements.txt` 與 PyInstaller，再執行 `./build_windows.ps1` 重建。打包後檔案位於 `dist/Multi-Tool-v3.0.1.exe`。
 
 ## 配置
 
