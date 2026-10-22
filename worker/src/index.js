@@ -848,7 +848,7 @@ async function handleCalDav(request, env, url, cors) {
       status: 200,
       headers: {
         ...cors,
-        DAV: "1, 2, 3, calendar-access",
+        DAV: "1, 2, calendar-access",
         Allow: "OPTIONS, GET, HEAD, PUT, DELETE, PROPFIND, REPORT, MKCOL, MKCALENDAR, PROPPATCH",
         "MS-Author-Via": "DAV"
       }
@@ -1106,8 +1106,7 @@ async function caldavCollectionResponse(request, collectionHref, principalHref, 
       <d:prop>
         <d:resourcetype><d:collection/><cal:calendar/></d:resourcetype>
         <d:displayname>课程表</d:displayname>
-        <d:getctag>${xmlEscape(ctag)}</d:getctag>
-        <d:sync-token>${xmlEscape(ctag)}</d:sync-token>
+        <cs:getctag>${xmlEscape(ctag)}</cs:getctag>
         <d:current-user-principal><d:href>${xmlEscape(principalHref)}</d:href></d:current-user-principal>
         <cal:calendar-home-set><d:href>${xmlEscape(collectionHref)}</d:href></cal:calendar-home-set>
         <cal:supported-calendar-component-set><cal:comp name="VEVENT"/></cal:supported-calendar-component-set>
@@ -1700,7 +1699,7 @@ function json(data, status, cors) {
   });
 }
 
-function xmlResponse(xml, cors, dav = "1, 2, 3, calendar-access") {
+function xmlResponse(xml, cors, dav = "1, 2, calendar-access") {
   return new Response(xml, {
     status: 207,
     headers: {
