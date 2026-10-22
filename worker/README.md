@@ -1,6 +1,6 @@
 # ICS / CalDAV Storage Worker v3.0
 
-本服務原本位於獨立 `calendar` 倉庫；程式碼、網站和部署配置現已整合到 [`thomaswan564/multi-tool`](https://github.com/thomaswan564/multi-tool)。Cloudflare Worker 仍使用 `calendar` 服務名稱及 `calendar.thomaswan.uk` 網址。舊倉庫已停止維護，所有後續功能以 multi-tool 為準。
+本服務原本位於獨立 `calendar` 倉庫；程式碼、網站和部署配置現已整合到 [`thomaswan564/multi-tool`](https://github.com/thomaswan564/multi-tool)。Cloudflare Worker 仍使用 `calendar` 服務名稱及 `calendar.thomaswan.uk` 網址。Worker 在根路徑和一般網頁路徑透明代理 GitHub Pages 的 `multi-tool` 網站，因此網址列保持 `calendar.thomaswan.uk`；`/api/`、`/caldav/` 和 `.ics` 路徑仍由 Worker 本身處理。舊倉庫已停止維護，所有後續功能以 multi-tool 為準。
 
 ## 自行部署
 

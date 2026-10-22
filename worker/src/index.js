@@ -1,7 +1,7 @@
 /**
  * Calendar Worker v3.0
  *
- * Backend only:
+ * Backend/API and transparent GitHub Pages proxy:
  *   - register / login / view API key
  *   - guest & registered file upload/list/delete
  *   - GitHub storage
