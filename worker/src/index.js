@@ -1129,7 +1129,7 @@ async function caldavCollectionResponse(request, collectionHref, principalHref, 
 ${collection}${resourceXml}
 </d:multistatus>`,
     cors,
-    "1, 2, 3, calendar-access"
+    "1, 2, calendar-access"
   );
 }
 
@@ -1150,7 +1150,7 @@ async function caldavPrincipalResponse(principalHref, collectionHref, cors) {
   </d:response>
 </d:multistatus>`;
 
-  return xmlResponse(xml, cors, "1, 2, 3, calendar-access");
+  return xmlResponse(xml, cors, "1, 2, calendar-access");
 }
 
 function resourceResponseXml(resource) {
@@ -1177,7 +1177,7 @@ async function caldavResourceResponse(resource, cors) {
 ${resourceResponseXml(resource)}
 </d:multistatus>`,
     cors,
-    "1, 2, 3, calendar-access"
+    "1, 2, calendar-access"
   );
 }
 
@@ -1219,7 +1219,7 @@ async function caldavReport(request, resources, apiKey, cors) {
 ${responses.join("")}
 </d:multistatus>`,
     cors,
-    "1, 2, 3, calendar-access"
+    "1, 2, calendar-access"
   );
 }
 
@@ -1234,7 +1234,7 @@ function caldavPropPatch(collectionHref, cors) {
     </d:propstat>
   </d:response>
 </d:multistatus>`;
-  return xmlResponse(xml, cors, "1, 2, 3, calendar-access");
+  return xmlResponse(xml, cors, "1, 2, calendar-access");
 }
 
 function parseCalDavCredentials(request) {
